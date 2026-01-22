@@ -2,13 +2,13 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<title>QR Navigation</title>
+<title>Välj mottagning</title>
 <style>
 body {
   font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 40px;
   background: #f2f2f2;
+  padding: 40px;
+  text-align: center;
 }
 
 .card {
@@ -19,27 +19,41 @@ body {
   margin: auto;
 }
 
+h1 {
+  margin-bottom: 10px;
+}
+
+p {
+  color: #555;
+}
+
 a {
   display: block;
-  margin: 15px 0;
-  font-size: 22px;
+  margin: 12px 0;
+  padding: 18px;
+  background: #007bff;
+  color: white;
   text-decoration: none;
+  border-radius: 12px;
+  font-size: 22px;
+}
+
+a:hover {
+  background: #0056b3;
 }
 </style>
 </head>
 <body>
 
 <div class="card">
-  <h1>📍 QR Navigation Prototype</h1>
-  <p>Detta är startsidan. I verkligheten skannar man QR-koder.</p>
+  <h1>📍 Välj mottagning</h1>
+  <p>Tryck på din destination (eller gör QR-koder av dessa länkar)</p>
 
-  <h2>🔧 Testlänkar:</h2>
-
-  <a href="guide.html?step=1">➡️ Start (Steg 1)</a>
-  <a href="guide.html?step=2">➡️ Steg 2</a>
-  <a href="guide.html?step=3">➡️ Steg 3</a>
-  <a href="guide.html?step=4">➡️ Steg 4</a>
-  <a href="guide.html?step=klar">🏁 Klar</a>
+  <a href="guide.html?dest=rontgen&step=1">🩻 Röntgen</a>
+  <a href="guide.html?dest=akuten&step=1">🚑 Akuten</a>
+  <a href="guide.html?dest=labb&step=1">🧪 Laboratoriet</a>
+  <a href="guide.html?dest=ortoped&step=1">🦴 Ortopedmottagningen</a>
+  <a href="guide.html?dest=barn&step=1">👶 Barnmottagningen</a>
 
 </div>
 
