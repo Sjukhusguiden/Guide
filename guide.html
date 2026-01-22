@@ -2,10 +2,10 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<title>QR Guide</title>
+<title>QR Guide Test</title>
 <style>
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   text-align: center;
   padding: 40px;
   background: #f2f2f2;
@@ -14,44 +14,64 @@ body {
   background: white;
   padding: 40px;
   border-radius: 20px;
-  font-size: 36px;
+  font-size: 32px;
 }
 .small {
+  margin-top: 20px;
   font-size: 16px;
   color: #666;
-  margin-top: 20px;
 }
 </style>
 </head>
 <body>
 
-<h1>📍 Navigation</h1>
+<h1>📍 QR Navigation Test</h1>
 <div class="box" id="instruction">Laddar...</div>
 <div class="small" id="debug"></div>
 
 <script>
-const steps = {
-  "1": "➡️ Gå rakt fram tills nästa korsning",
-  "2": "⬅️ Gå vänster vid nästa vänstra korridor",
-  "3": "➡️ Fortsätt rakt fram förbi två dörrar",
-  "4": "➡️ Sväng höger vid receptionen",
-  "klar": "✅ Du är framme vid din destination"
+// Rutter för två mottagningar
+const routes = {
+  rontgen: {
+    1: "Gå rakt fram till korsningen",
+    2: "Gå vänster vid nästa korridor",
+    3: "Ta hissen till våning 2",
+    4: "Du är framme vid Röntgen"
+  },
+  akuten: {
+    1: "Gå rakt fram till korsningen",
+    2: "Sväng höger i korsningen",
+    3: "Följ röda linjen",
+    4: "Du är framme vid Akuten"
+  }
 };
 
-// Läs ?step= från URL
 const params = new URLSearchParams(window.location.search);
 const step = params.get("step");
+const destParam = params.get("dest");
 
-// Visa rätt instruktion
+// Spara destination om den finns i URL
+if (destParam) {
+  localStorage.setItem("dest", destParam);
+}
+
+// Hämta sparad destination
+const dest = localStorage.getItem("dest");
+
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
-if (step && steps[step]) {
-  instructionDiv.textContent = steps[step];
-  debugDiv.textContent = "Steg: " + step;
-} else {
-  instructionDiv.textContent = "❌ Fel QR-kod eller saknad instruktion";
-  debugDiv.textContent = "Använd t.ex: guide.html?step=1";
+if (!dest) {
+  instructionDiv.textContent =
+    "📍 Skanna en start-QR-kod i receptionen";
+}
+else if (routes[dest] && routes[dest][step]) {
+  instructionDiv.textContent = routes[dest][step];
+  debugDiv.textContent = "Destination: " + dest + " | Steg: " + step;
+}
+else {
+  instructionDiv.textContent =
+    "❌ Fel QR-kod eller saknat steg";
 }
 </script>
 
