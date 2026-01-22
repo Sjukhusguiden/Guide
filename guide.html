@@ -30,7 +30,7 @@ body {
 <div class="small" id="debug"></div>
 
 <script>
-// Rutter för två mottagningar
+// Rutter för flera mottagningar
 const routes = {
   rontgen: {
     1: "🩻 Röntgen: Gå rakt fram från receptionen",
@@ -38,11 +38,33 @@ const routes = {
     3: "🩻 Röntgen: Ta hissen till våning 2",
     4: "🩻 Röntgen: Du är framme vid röntgenmottagningen"
   },
+
   akuten: {
     1: "🚑 Akuten: Gå rakt fram från receptionen",
     2: "🚑 Akuten: Sväng höger i korsningen",
     3: "🚑 Akuten: Följ den röda linjen i golvet",
     4: "🚑 Akuten: Du är framme vid akutmottagningen"
+  },
+
+  labb: {
+    1: "🧪 Laboratoriet: Gå rakt fram från receptionen",
+    2: "🧪 Laboratoriet: Fortsätt rakt fram förbi kafeterian",
+    3: "🧪 Laboratoriet: Ta trappan upp en våning",
+    4: "🧪 Laboratoriet: Du är framme vid laboratoriet"
+  },
+
+  ortoped: {
+    1: "🦴 Ortopedmottagningen: Gå rakt fram från receptionen",
+    2: "🦴 Ortopedmottagningen: Sväng vänster i korsningen",
+    3: "🦴 Ortopedmottagningen: Följ gröna linjen i golvet",
+    4: "🦴 Ortopedmottagningen: Du är framme vid ortopedmottagningen"
+  },
+
+  barn: {
+    1: "👶 Barnmottagningen: Gå rakt fram från receptionen",
+    2: "👶 Barnmottagningen: Sväng höger vid lekytan",
+    3: "👶 Barnmottagningen: Fortsätt rakt fram till färgglada dörrar",
+    4: "👶 Barnmottagningen: Du är framme vid barnmottagningen"
   }
 };
 
@@ -75,7 +97,5 @@ else {
 }
 </script>
 
-
 </body>
 </html>
-
