@@ -2,7 +2,9 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Välj mottagning</title>
+
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -41,8 +43,35 @@ a {
 a:hover {
   background: #0056b3;
 }
+
+/* ===== Mobil / portrait ===== */
+@media (max-width: 768px) {
+
+  body {
+    padding: 20px;
+  }
+
+  .card {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  p {
+    font-size: 15px;
+  }
+
+  a {
+    font-size: 20px;
+    padding: 16px;
+  }
+}
 </style>
 </head>
+
 <body>
 
 <div class="card">
@@ -59,4 +88,3 @@ a:hover {
 
 </body>
 </html>
-
