@@ -57,73 +57,82 @@ body {
 <div class="small" id="debug"></div>
 
 <script>
-// Rutter för flera mottagningar
+// =======================
+// RUTTER MED STARTPUNKTER
+// =======================
 const routes = {
-  T4: {
+  entréA: {
+    T4: {
     1: "🩻 T4: Ta trappan up 2 våningar",
     2: "🩻 T4: Gå rakt fram till trappan längst bort i korridoren",
     3: "🩻 T4: Ta rampen up till närmaste ingång till vänster",
     4: "🩻 T4: Du är nu framme i korridoren med T4 klassrummen"
+    },
+    akuten: {
+      1: "🚑 Akuten: Gå rakt fram från entré A",
+      2: "🚑 Akuten: Sväng höger",
+      3: "🚑 Akuten: Följ röda linjen",
+      4: "🚑 Akuten: Du är framme"
+    }
   },
 
-  akuten: {
-    1: "🚑 Akuten: Gå rakt fram från receptionen",
-    2: "🚑 Akuten: Sväng höger i korsningen",
-    3: "🚑 Akuten: Följ den röda linjen i golvet",
-    4: "🚑 Akuten: Du är framme vid akutmottagningen"
-  },
-
-  labb: {
-    1: "🧪 Laboratoriet: Gå rakt fram från receptionen",
-    2: "🧪 Laboratoriet: Fortsätt rakt fram förbi kafeterian",
-    3: "🧪 Laboratoriet: Ta trappan upp en våning",
-    4: "🧪 Laboratoriet: Du är framme vid laboratoriet"
-  },
-
-  ortoped: {
-    1: "🦴 Ortopedmottagningen: Gå rakt fram från receptionen",
-    2: "🦴 Ortopedmottagningen: Sväng vänster i korsningen",
-    3: "🦴 Ortopedmottagningen: Följ gröna linjen i golvet",
-    4: "🦴 Ortopedmottagningen: Du är framme vid ortopedmottagningen"
-  },
-
-  barn: {
-    1: "👶 Barnmottagningen: Gå rakt fram från receptionen",
-    2: "👶 Barnmottagningen: Sväng höger vid lekytan",
-    3: "👶 Barnmottagningen: Fortsätt rakt fram till färgglada dörrar",
-    4: "👶 Barnmottagningen: Du är framme vid barnmottagningen"
+  entréB: {
+    C303: {
+      1: "🧪 C303: Gå rakt fram från entré B",
+      2: "🧪 C303: Förbi kafeterian",
+      3: "🧪 C303: Ta trappan upp",
+      4: "🧪 C303: Du är framme"
+    }
   }
 };
 
+// =======================
+// URL + LAGRING
+// =======================
 const params = new URLSearchParams(window.location.search);
-const step = params.get("step");
-const destParam = params.get("dest");
+let step = parseInt(params.get("step") || "1");
 
-// Spara destination om den finns i URL
-if (destParam) {
-  localStorage.setItem("dest", destParam);
+// Spara ny rutt / destination om de finns
+if (params.get("route")) {
+  localStorage.setItem("route", params.get("route"));
+}
+if (params.get("dest")) {
+  localStorage.setItem("dest", params.get("dest"));
 }
 
-// Hämta sparad destination
+// Läs sparade värden
+const route = localStorage.getItem("route");
 const dest = localStorage.getItem("dest");
 
+// =======================
+// VISA INSTRUKTION
+// =======================
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
-if (!dest) {
+if (!route || !dest) {
   instructionDiv.textContent =
     "📍 Skanna en start-QR-kod i receptionen";
 }
-else if (routes[dest] && routes[dest][step]) {
-  instructionDiv.textContent = routes[dest][step];
-  debugDiv.textContent = "Destination: " + dest + " | Steg: " + step;
-}
 else {
-  instructionDiv.textContent =
-    "❌ Fel QR-kod eller saknat steg";
+  const routeData = routes[route]?.[dest];
+
+  if (!routeData) {
+    instructionDiv.textContent = "❌ Ingen väg hittades";
+  }
+  else {
+    const maxStep = Math.max(...Object.keys(routeData).map(Number));
+
+    if (step < 1) step = 1;
+    if (step > maxStep) step = maxStep;
+
+    instructionDiv.textContent = routeData[step];
+    debugDiv.textContent =
+      "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
+  }
 }
 </script>
-
 </body>
 </html>
+
 
