@@ -63,10 +63,10 @@ body {
 const routes = {
   entréA: {
     T4: {
-    1: "🩻 T4: Ta trappan up 2 våningar",
-    2: "🩻 T4: Gå rakt fram till trappan längst bort i korridoren",
-    3: "🩻 T4: Ta rampen up till närmaste ingång till vänster",
-    4: "🩻 T4: Du är nu framme i korridoren med T4 klassrummen"
+      1: "🩻 T4: Ta trappan up 2 våningar",
+      2: "🩻 T4: Gå rakt fram till trappan längst bort i korridoren",
+      3: "🩻 T4: Ta rampen up till närmaste ingång till vänster",
+      4: "🩻 T4: Du är nu framme i korridoren med T4 klassrummen"
     },
     akuten: {
       1: "🚑 Akuten: Gå rakt fram från entré A",
@@ -113,26 +113,39 @@ const debugDiv = document.getElementById("debug");
 if (!route || !dest) {
   instructionDiv.textContent =
     "📍 Skanna en start-QR-kod i receptionen";
-}
-else {
+} else {
   const routeData = routes[route]?.[dest];
 
   if (!routeData) {
     instructionDiv.textContent = "❌ Ingen väg hittades";
-  }
-  else {
+  } else {
     const maxStep = Math.max(...Object.keys(routeData).map(Number));
 
     if (step < 1) step = 1;
     if (step > maxStep) step = maxStep;
 
+    // Visa instruktionen
     instructionDiv.textContent = routeData[step];
+
+    // Om sista steget, lägg till länk till formulär
+    if (step === maxStep) {
+      const formLink = document.createElement("a");
+      formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u"; // <-- byt ut med din Forms-länk
+      formLink.textContent = "✅ Fyll i formuläret här";
+      formLink.style.display = "block";
+      formLink.style.marginTop = "20px";
+      formLink.style.fontSize = "20px";
+      instructionDiv.appendChild(formLink);
+    }
+
     debugDiv.textContent =
       "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
   }
 }
 </script>
+
 </body>
 </html>
+
 
 
