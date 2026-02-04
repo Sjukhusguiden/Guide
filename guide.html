@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR Guide Test</title>
+<title>Vägledning QR-kod</title>
 
 <style>
 body {
@@ -67,7 +67,7 @@ const routes = {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
       2: "🧪 C303: Gå till slutet av korridoren",
       3: "🧪 C303: Ta trappan upp till kopiatorn",
-      4: "🧪 C303: Gå fram till tredje dörren i korridoren, på den står det C303",
+      4: "🧪 C303: gå framm till tredje dörren i korridoren, på den står det C303",
       5: "🧪 C303: Du är nu framme"
     }
   }
@@ -79,9 +79,9 @@ const routes = {
 const params = new URLSearchParams(window.location.search);
 let step = parseInt(params.get("step") || "1");
 
-// Spara ny rutt / destination om de finns i URL
-if (params.get("route")) localStorage.setItem("route", params.get("route"));
-if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
+// Spara ny rutt / destination om de finns
+if (params.get("route")) { localStorage.setItem("route", params.get("route")); }
+if (params.get("dest")) { localStorage.setItem("dest", params.get("dest")); }
 
 // Läs sparade värden
 const route = localStorage.getItem("route");
@@ -94,8 +94,7 @@ const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
 if (!route || !dest) {
-  instructionDiv.textContent =
-    "📍 Skanna en start-QR-kod i receptionen";
+  instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
 } else {
   const routeData = routes[route]?.[dest];
 
@@ -103,14 +102,13 @@ if (!route || !dest) {
     instructionDiv.textContent = "❌ Ingen väg hittades";
   } else {
     const maxStep = Math.max(...Object.keys(routeData).map(Number));
-
     if (step < 1) step = 1;
     if (step > maxStep) step = maxStep;
 
-    // Visa aktuell instruktion
+    // Visa instruktionen
     instructionDiv.textContent = routeData[step];
 
-    // Om sista steget, visa formulär (utan rensning)
+    // Om sista steget, lägg till länk till formulär
     if (step === maxStep) {
       const formLink = document.createElement("a");
       formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
@@ -121,8 +119,7 @@ if (!route || !dest) {
       instructionDiv.appendChild(formLink);
     }
 
-    debugDiv.textContent =
-      "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
+    debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
   }
 }
 </script>
