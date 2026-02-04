@@ -80,12 +80,8 @@ const params = new URLSearchParams(window.location.search);
 let step = parseInt(params.get("step") || "1");
 
 // Spara ny rutt / destination om de finns i URL
-if (params.get("route")) {
-  localStorage.setItem("route", params.get("route"));
-}
-if (params.get("dest")) {
-  localStorage.setItem("dest", params.get("dest"));
-}
+if (params.get("route")) localStorage.setItem("route", params.get("route"));
+if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
 
 // Läs sparade värden
 const route = localStorage.getItem("route");
@@ -97,7 +93,6 @@ const dest = localStorage.getItem("dest");
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
-// Om ingen route/dest finns, visa felmeddelande
 if (!route || !dest) {
   instructionDiv.textContent =
     "📍 Skanna en start-QR-kod i receptionen";
@@ -115,12 +110,8 @@ if (!route || !dest) {
     // Visa aktuell instruktion
     instructionDiv.textContent = routeData[step];
 
-    // =======================
-    // SLUT PÅ NAVIGATION
-    // =======================
+    // Om sista steget, visa formulär (utan rensning)
     if (step === maxStep) {
-
-      // Visa formulär
       const formLink = document.createElement("a");
       formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
       formLink.textContent = "✅ Fyll i formuläret här";
@@ -128,10 +119,6 @@ if (!route || !dest) {
       formLink.style.marginTop = "20px";
       formLink.style.fontSize = "20px";
       instructionDiv.appendChild(formLink);
-
-      // 🔥 Rensa route/dest EFTER sista steg
-      localStorage.removeItem("route");
-      localStorage.removeItem("dest");
     }
 
     debugDiv.textContent =
