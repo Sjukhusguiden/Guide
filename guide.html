@@ -28,24 +28,10 @@ body {
 
 /* ===== Mobil / portrait ===== */
 @media (max-width: 768px) {
-
-  body {
-    padding: 20px;
-  }
-
-  h1 {
-    font-size: 26px;
-  }
-
-  .box {
-    padding: 30px 20px;
-    font-size: 22px;
-    border-radius: 16px;
-  }
-
-  .small {
-    font-size: 14px;
-  }
+  body { padding: 20px; }
+  h1 { font-size: 26px; }
+  .box { padding: 30px 20px; font-size: 22px; border-radius: 16px; }
+  .small { font-size: 14px; }
 }
 </style>
 </head>
@@ -57,12 +43,6 @@ body {
 <div class="small" id="debug"></div>
 
 <script>
-// =======================
-// RESET NAVIGATION ON LOAD
-// =======================
-localStorage.removeItem("route");
-localStorage.removeItem("dest");
-
 // =======================
 // RUTTER MED STARTPUNKTER
 // =======================
@@ -99,7 +79,7 @@ const routes = {
 const params = new URLSearchParams(window.location.search);
 let step = parseInt(params.get("step") || "1");
 
-// Spara ny rutt / destination om de finns
+// Spara ny rutt / destination om de finns i URL
 if (params.get("route")) {
   localStorage.setItem("route", params.get("route"));
 }
@@ -117,6 +97,7 @@ const dest = localStorage.getItem("dest");
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
+// Om ingen route/dest finns, visa felmeddelande
 if (!route || !dest) {
   instructionDiv.textContent =
     "📍 Skanna en start-QR-kod i receptionen";
@@ -131,17 +112,26 @@ if (!route || !dest) {
     if (step < 1) step = 1;
     if (step > maxStep) step = maxStep;
 
+    // Visa aktuell instruktion
     instructionDiv.textContent = routeData[step];
 
+    // =======================
+    // SLUT PÅ NAVIGATION
+    // =======================
     if (step === maxStep) {
+
+      // Visa formulär
       const formLink = document.createElement("a");
-      formLink.href =
-        "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
+      formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
       formLink.textContent = "✅ Fyll i formuläret här";
       formLink.style.display = "block";
       formLink.style.marginTop = "20px";
       formLink.style.fontSize = "20px";
       instructionDiv.appendChild(formLink);
+
+      // 🔥 Rensa route/dest EFTER sista steg
+      localStorage.removeItem("route");
+      localStorage.removeItem("dest");
     }
 
     debugDiv.textContent =
@@ -149,5 +139,6 @@ if (!route || !dest) {
   }
 }
 </script>
+
 </body>
 </html>
