@@ -28,21 +28,24 @@ body {
 
 button {
   margin-top: 20px;
-  padding: 15px 25px;
-  font-size: 18px;
-  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 20px;
+  border-radius: 14px;
   border: none;
-  background: #0078d4;
+  background: #007bff;
   color: white;
-  cursor: pointer;
+}
+
+button:active {
+  background: #0056b3;
 }
 
 video {
-  display: none;
   width: 100%;
-  max-width: 400px;
-  margin: 20px auto;
+  max-width: 360px;
+  margin-top: 20px;
   border-radius: 16px;
+  display: none;
 }
 
 /* ===== Mobil / portrait ===== */
@@ -58,14 +61,11 @@ video {
 <body>
 
 <h1>📍 QR Navigation Test</h1>
-
 <div class="box" id="instruction">Laddar...</div>
+<div class="small" id="debug"></div>
 
 <button id="scanBtn">📷 Skanna nästa QR-kod</button>
-
-<video id="camera" playsinline></video>
-
-<div class="small" id="debug"></div>
+<video id="video" autoplay playsinline></video>
 
 <script>
 // =======================
@@ -86,7 +86,6 @@ const routes = {
       4: "🚑 Akuten: Du är framme"
     }
   },
-
   entréB: {
     C303: {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
@@ -120,7 +119,6 @@ if (!route || !dest) {
   instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
 } else {
   const routeData = routes[route]?.[dest];
-
   if (!routeData) {
     instructionDiv.textContent = "❌ Ingen väg hittades";
   } else {
@@ -140,18 +138,16 @@ if (!route || !dest) {
       instructionDiv.appendChild(formLink);
     }
 
-    debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
+    debugDiv.textContent =
+      "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
   }
 }
 
 // =======================
-// QR-KAMERA SCANNING
+// QR-SCANNER (FIXAR guide.html?step=X)
 // =======================
 const scanBtn = document.getElementById("scanBtn");
-const video = document.getElementById("camera");
-
-let stream;
-let detector;
+const video = document.getElementById("video");
 
 scanBtn.addEventListener("click", async () => {
   if (!("BarcodeDetector" in window)) {
@@ -159,37 +155,35 @@ scanBtn.addEventListener("click", async () => {
     return;
   }
 
-  detector = new BarcodeDetector({ formats: ["qr_code"] });
+  const detector = new BarcodeDetector({ formats: ["qr_code"] });
 
-  stream = await navigator.mediaDevices.getUserMedia({
+  const stream = await navigator.mediaDevices.getUserMedia({
     video: { facingMode: "environment" }
   });
 
   video.srcObject = stream;
   video.style.display = "block";
-  await video.play();
+
+  const scanLoop = async () => {
+    const codes = await detector.detect(video);
+    if (codes.length > 0) {
+      stream.getTracks().forEach(t => t.stop());
+
+      const scanned = codes[0].rawValue;
+
+      // 🔑 FIX: gör relativa QR-länkar absoluta
+      const targetUrl = scanned.startsWith("http")
+        ? scanned
+        : new URL(scanned, window.location.origin).href;
+
+      window.location.href = targetUrl;
+      return;
+    }
+    requestAnimationFrame(scanLoop);
+  };
 
   scanLoop();
 });
-
-async function scanLoop() {
-  if (video.readyState === 4) {
-    try {
-      const codes = await detector.detect(video);
-      if (codes.length > 0) {
-        stopCamera();
-        window.location.href = codes[0].rawValue;
-        return;
-      }
-    } catch (e) {}
-  }
-  requestAnimationFrame(scanLoop);
-}
-
-function stopCamera() {
-  if (stream) stream.getTracks().forEach(t => t.stop());
-  video.style.display = "none";
-}
 </script>
 
 </body>
