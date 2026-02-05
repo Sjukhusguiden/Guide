@@ -30,7 +30,7 @@ button {
   margin-top: 20px;
   padding: 16px 24px;
   font-size: 20px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: none;
   background: #007bff;
   color: white;
@@ -42,9 +42,9 @@ button:active {
 
 video {
   width: 100%;
-  max-width: 360px;
+  max-width: 400px;
   margin-top: 20px;
-  border-radius: 16px;
+  border-radius: 12px;
   display: none;
 }
 
@@ -61,11 +61,13 @@ video {
 <body>
 
 <h1>📍 QR Navigation Test</h1>
+
 <div class="box" id="instruction">Laddar...</div>
-<div class="small" id="debug"></div>
 
 <button id="scanBtn">📷 Skanna nästa QR-kod</button>
-<video id="video" autoplay playsinline></video>
+<video id="video"></video>
+
+<div class="small" id="debug"></div>
 
 <script>
 // =======================
@@ -86,6 +88,7 @@ const routes = {
       4: "🚑 Akuten: Du är framme"
     }
   },
+
   entréB: {
     C303: {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
@@ -119,6 +122,7 @@ if (!route || !dest) {
   instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
 } else {
   const routeData = routes[route]?.[dest];
+
   if (!routeData) {
     instructionDiv.textContent = "❌ Ingen väg hittades";
   } else {
@@ -130,7 +134,8 @@ if (!route || !dest) {
 
     if (step === maxStep) {
       const formLink = document.createElement("a");
-      formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
+      formLink.href =
+        "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
       formLink.textContent = "✅ Fyll i formuläret här";
       formLink.style.display = "block";
       formLink.style.marginTop = "20px";
@@ -144,15 +149,14 @@ if (!route || !dest) {
 }
 
 // =======================
-// QR-SCANNER (REUSABLE)
+// QR-SCANNER
 // =======================
 const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("video");
-
 let stream = null;
 let scanning = false;
 
-async function startScanner() {
+scanBtn.addEventListener("click", async () => {
   if (scanning) return;
   scanning = true;
 
@@ -162,7 +166,6 @@ async function startScanner() {
     return;
   }
 
-  // 🔥 HARD RESET camera
   if (stream) {
     stream.getTracks().forEach(t => t.stop());
     stream = null;
@@ -182,45 +185,28 @@ async function startScanner() {
   async function scanLoop() {
     if (!scanning) return;
 
-    try {
-      const codes = await detector.detect(video);
-      if (codes.length > 0) {
-        scanning = false;
+    const codes = await detector.detect(video);
+    if (codes.length > 0) {
+      scanning = false;
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
 
-        // Stop camera cleanly
-        stream.getTracks().forEach(t => t.stop());
-        stream = null;
+      const scannedUrl = new URL(codes[0].rawValue, window.location.origin);
+      const scannedStep = scannedUrl.searchParams.get("step");
 
-        const scanned = codes[0].rawValue;
-
-        const targetUrl = scanned.startsWith("http")
-          ? scanned
-          : new URL(scanned, window.location.origin).href;
-
-        window.location.href = targetUrl;
-        return;
+      if (scannedStep) {
+        const newParams = new URLSearchParams(window.location.search);
+        newParams.set("step", scannedStep);
+        location.href = "guide.html?" + newParams.toString();
       }
-    } catch (e) {
-      console.warn("Scan error:", e);
+      return;
     }
 
     requestAnimationFrame(scanLoop);
   }
 
   scanLoop();
-}
-
-scanBtn.addEventListener("click", startScanner);
-
-// 🔒 Extra safety: stop camera if user switches tabs
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && stream) {
-    stream.getTracks().forEach(t => t.stop());
-    stream = null;
-    scanning = false;
-  }
 });
-
 </script>
 
 </body>
