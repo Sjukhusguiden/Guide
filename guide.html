@@ -26,13 +26,6 @@ body {
   color: #666;
 }
 
-#reader {
-  width: 100%;
-  max-width: 400px;
-  margin: 20px auto;
-  border-radius: 16px;
-}
-
 /* ===== Mobil / portrait ===== */
 @media (max-width: 768px) {
   body { padding: 20px; }
@@ -41,18 +34,12 @@ body {
   .small { font-size: 14px; }
 }
 </style>
-
-<!-- Include html5-qrcode library -->
-<script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
-
 </head>
 
 <body>
 
 <h1>📍 QR Navigation Test</h1>
-
 <div class="box" id="instruction">Laddar...</div>
-<div id="reader"></div>
 <div class="small" id="debug"></div>
 
 <script>
@@ -87,84 +74,54 @@ const routes = {
 };
 
 // =======================
+// URL + LAGRING
+// =======================
+const params = new URLSearchParams(window.location.search);
+let step = parseInt(params.get("step") || "1");
+
+// Spara ny rutt / destination om de finns
+if (params.get("route")) { localStorage.setItem("route", params.get("route")); }
+if (params.get("dest")) { localStorage.setItem("dest", params.get("dest")); }
+
+// Läs sparade värden
+const route = localStorage.getItem("route");
+const dest = localStorage.getItem("dest");
+
+// =======================
 // VISA INSTRUKTION
 // =======================
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
-let route = localStorage.getItem("route");
-let dest = localStorage.getItem("dest");
-let step = parseInt(localStorage.getItem("step") || "1");
-
-function updateInstruction() {
-  if (!route || !dest) {
-    instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
-    return;
-  }
-
+if (!route || !dest) {
+  instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
+} else {
   const routeData = routes[route]?.[dest];
+
   if (!routeData) {
     instructionDiv.textContent = "❌ Ingen väg hittades";
-    return;
-  }
+  } else {
+    const maxStep = Math.max(...Object.keys(routeData).map(Number));
+    if (step < 1) step = 1;
+    if (step > maxStep) step = maxStep;
 
-  const maxStep = Math.max(...Object.keys(routeData).map(Number));
-  if (step < 1) step = 1;
-  if (step > maxStep) step = maxStep;
+    // Visa instruktionen
+    instructionDiv.textContent = routeData[step];
 
-  instructionDiv.textContent = routeData[step];
+    // Om sista steget, lägg till länk till formulär
+    if (step === maxStep) {
+      const formLink = document.createElement("a");
+      formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
+      formLink.textContent = "✅ Fyll i formuläret här";
+      formLink.style.display = "block";
+      formLink.style.marginTop = "20px";
+      formLink.style.fontSize = "20px";
+      instructionDiv.appendChild(formLink);
+    }
 
-  // Om sista steget, lägg till länk till formulär
-  if (step === maxStep) {
-    const formLink = document.createElement("a");
-    formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
-    formLink.textContent = "✅ Fyll i formuläret här";
-    formLink.style.display = "block";
-    formLink.style.marginTop = "20px";
-    formLink.style.fontSize = "20px";
-    instructionDiv.appendChild(formLink);
-  }
-
-  debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
-}
-
-// Initial instruction display
-updateInstruction();
-
-// =======================
-// QR SCANNING MED html5-qrcode
-// =======================
-function onScanSuccess(decodedText) {
-  try {
-    const url = new URL(decodedText);
-    const params = new URLSearchParams(url.search);
-    const newRoute = params.get("route");
-    const newDest = params.get("dest");
-    const newStep = parseInt(params.get("step"));
-
-    if (newRoute) localStorage.setItem("route", newRoute);
-    if (newDest) localStorage.setItem("dest", newDest);
-    if (newStep) localStorage.setItem("step", newStep);
-
-    route = localStorage.getItem("route");
-    dest = localStorage.getItem("dest");
-    step = parseInt(localStorage.getItem("step") || "1");
-
-    updateInstruction();
-  } catch (e) {
-    console.error("Invalid QR code", e);
+    debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
   }
 }
-
-// Start scanning continuously
-const html5QrcodeScanner = new Html5Qrcode("reader");
-html5QrcodeScanner.start(
-  { facingMode: "environment" },
-  { fps: 10, qrbox: 250 },
-  onScanSuccess
-).catch(err => {
-  console.error("QR scanner error", err);
-});
 </script>
 
 </body>
