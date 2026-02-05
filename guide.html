@@ -118,35 +118,42 @@ const dest = localStorage.getItem("dest");
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
-if (!route || !dest) {
-  instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
-} else {
-  const routeData = routes[route]?.[dest];
+function updateInstruction() {
+  if (!route || !dest) {
+    instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
+    debugDiv.textContent = "";
+    return;
+  }
 
+  const routeData = routes[route]?.[dest];
   if (!routeData) {
     instructionDiv.textContent = "❌ Ingen väg hittades";
-  } else {
-    const maxStep = Math.max(...Object.keys(routeData).map(Number));
-    if (step < 1) step = 1;
-    if (step > maxStep) step = maxStep;
-
-    instructionDiv.textContent = routeData[step];
-
-    if (step === maxStep) {
-      const formLink = document.createElement("a");
-      formLink.href =
-        "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
-      formLink.textContent = "✅ Fyll i formuläret här";
-      formLink.style.display = "block";
-      formLink.style.marginTop = "20px";
-      formLink.style.fontSize = "20px";
-      instructionDiv.appendChild(formLink);
-    }
-
-    debugDiv.textContent =
-      "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
+    debugDiv.textContent = "Start: " + route + " | Destination: " + dest;
+    return;
   }
+
+  const maxStep = Math.max(...Object.keys(routeData).map(Number));
+  if (step < 1) step = 1;
+  if (step > maxStep) step = maxStep;
+
+  instructionDiv.textContent = routeData[step];
+
+  if (step === maxStep) {
+    const formLink = document.createElement("a");
+    formLink.href =
+      "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
+    formLink.textContent = "✅ Fyll i formuläret här";
+    formLink.style.display = "block";
+    formLink.style.marginTop = "20px";
+    formLink.style.fontSize = "20px";
+    instructionDiv.appendChild(formLink);
+  }
+
+  debugDiv.textContent =
+    "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
 }
+
+updateInstruction();
 
 // =======================
 // QR-SCANNER
@@ -191,14 +198,17 @@ scanBtn.addEventListener("click", async () => {
       stream.getTracks().forEach(t => t.stop());
       stream = null;
 
+      // Handle both start QR and step QR
       const scannedUrl = new URL(codes[0].rawValue, window.location.origin);
       const scannedStep = scannedUrl.searchParams.get("step");
+      const scannedRoute = scannedUrl.searchParams.get("route");
+      const scannedDest = scannedUrl.searchParams.get("dest");
 
-      if (scannedStep) {
-        const newParams = new URLSearchParams(window.location.search);
-        newParams.set("step", scannedStep);
-        location.href = "guide.html?" + newParams.toString();
-      }
+      if (scannedRoute) localStorage.setItem("route", scannedRoute);
+      if (scannedDest) localStorage.setItem("dest", scannedDest);
+      if (scannedStep) step = parseInt(scannedStep);
+
+      updateInstruction();
       return;
     }
 
