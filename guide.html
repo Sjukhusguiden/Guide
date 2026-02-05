@@ -28,23 +28,21 @@ body {
 
 button {
   margin-top: 20px;
-  padding: 14px 20px;
+  padding: 15px 25px;
   font-size: 18px;
   border-radius: 12px;
   border: none;
-  background: #007bff;
+  background: #0078d4;
   color: white;
-}
-
-button:hover {
-  background: #0056b3;
+  cursor: pointer;
 }
 
 video {
+  display: none;
   width: 100%;
-  max-width: 320px;
-  margin-top: 20px;
-  border-radius: 12px;
+  max-width: 400px;
+  margin: 20px auto;
+  border-radius: 16px;
 }
 
 /* ===== Mobil / portrait ===== */
@@ -60,10 +58,12 @@ video {
 <body>
 
 <h1>📍 QR Navigation Test</h1>
+
 <div class="box" id="instruction">Laddar...</div>
 
 <button id="scanBtn">📷 Skanna nästa QR-kod</button>
-<video id="video" hidden></video>
+
+<video id="camera" playsinline></video>
 
 <div class="small" id="debug"></div>
 
@@ -92,7 +92,7 @@ const routes = {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
       2: "🧪 C303: Gå till slutet av korridoren",
       3: "🧪 C303: Ta trappan upp till kopiatorn",
-      4: "🧪 C303: gå fram till tredje dörren i korridoren, på den står det C303",
+      4: "🧪 C303: gå framm till tredje dörren i korridoren, på den står det C303",
       5: "🧪 C303: Du är nu framme"
     }
   }
@@ -132,8 +132,7 @@ if (!route || !dest) {
 
     if (step === maxStep) {
       const formLink = document.createElement("a");
-      formLink.href =
-        "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
+      formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
       formLink.textContent = "✅ Fyll i formuläret här";
       formLink.style.display = "block";
       formLink.style.marginTop = "20px";
@@ -141,45 +140,56 @@ if (!route || !dest) {
       instructionDiv.appendChild(formLink);
     }
 
-    debugDiv.textContent =
-      "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
+    debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
   }
 }
 
 // =======================
-// QR-SCANNER (KAMERA)
+// QR-KAMERA SCANNING
 // =======================
 const scanBtn = document.getElementById("scanBtn");
-const video = document.getElementById("video");
+const video = document.getElementById("camera");
 
-scanBtn.onclick = async () => {
+let stream;
+let detector;
+
+scanBtn.addEventListener("click", async () => {
   if (!("BarcodeDetector" in window)) {
-    alert("QR-skanning stöds inte på denna enhet.");
+    alert("QR-skanning stöds inte i denna webbläsare");
     return;
   }
 
-  const stream = await navigator.mediaDevices.getUserMedia({
+  detector = new BarcodeDetector({ formats: ["qr_code"] });
+
+  stream = await navigator.mediaDevices.getUserMedia({
     video: { facingMode: "environment" }
   });
 
-  video.hidden = false;
   video.srcObject = stream;
-  video.play();
-
-  const detector = new BarcodeDetector({ formats: ["qr_code"] });
-
-  const scanLoop = async () => {
-    const codes = await detector.detect(video);
-    if (codes.length > 0) {
-      stream.getTracks().forEach(t => t.stop());
-      window.location.href = codes[0].rawValue;
-    } else {
-      requestAnimationFrame(scanLoop);
-    }
-  };
+  video.style.display = "block";
+  await video.play();
 
   scanLoop();
-};
+});
+
+async function scanLoop() {
+  if (video.readyState === 4) {
+    try {
+      const codes = await detector.detect(video);
+      if (codes.length > 0) {
+        stopCamera();
+        window.location.href = codes[0].rawValue;
+        return;
+      }
+    } catch (e) {}
+  }
+  requestAnimationFrame(scanLoop);
+}
+
+function stopCamera() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  video.style.display = "none";
+}
 </script>
 
 </body>
