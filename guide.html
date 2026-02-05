@@ -30,25 +30,29 @@ button {
   margin-top: 20px;
   padding: 16px 24px;
   font-size: 20px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
   background: #007bff;
   color: white;
 }
 
-video {
-  display: none;
-  margin-top: 20px;
-  width: 100%;
-  max-width: 420px;
-  border-radius: 12px;
+button:active {
+  background: #0056b3;
 }
 
-/* ===== Mobil ===== */
+video {
+  width: 100%;
+  max-width: 360px;
+  margin-top: 20px;
+  border-radius: 16px;
+  display: none;
+}
+
+/* ===== Mobil / portrait ===== */
 @media (max-width: 768px) {
   body { padding: 20px; }
   h1 { font-size: 26px; }
-  .box { padding: 30px 20px; font-size: 22px; }
+  .box { padding: 30px 20px; font-size: 22px; border-radius: 16px; }
   .small { font-size: 14px; }
 }
 </style>
@@ -57,18 +61,15 @@ video {
 <body>
 
 <h1>📍 QR Navigation Test</h1>
-
 <div class="box" id="instruction">Laddar...</div>
+<div class="small" id="debug"></div>
 
 <button id="scanBtn">📷 Skanna nästa QR-kod</button>
-
-<video id="video" muted playsinline></video>
-
-<div class="small" id="debug"></div>
+<video id="video" autoplay playsinline></video>
 
 <script>
 // =======================
-// RUTTER
+// RUTTER MED STARTPUNKTER
 // =======================
 const routes = {
   entréA: {
@@ -85,7 +86,6 @@ const routes = {
       4: "🚑 Akuten: Du är framme"
     }
   },
-
   entréB: {
     C303: {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
@@ -98,7 +98,7 @@ const routes = {
 };
 
 // =======================
-// URL + STORAGE
+// URL + LAGRING
 // =======================
 const params = new URLSearchParams(window.location.search);
 let step = parseInt(params.get("step") || "1");
@@ -109,6 +109,9 @@ if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
 const route = localStorage.getItem("route");
 const dest = localStorage.getItem("dest");
 
+// =======================
+// VISA INSTRUKTION
+// =======================
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
@@ -141,7 +144,7 @@ if (!route || !dest) {
 }
 
 // =======================
-// QR SCANNER (FIXED)
+// QR-SCANNER (REUSABLE)
 // =======================
 const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("video");
@@ -149,7 +152,7 @@ const video = document.getElementById("video");
 let stream = null;
 let scanning = false;
 
-scanBtn.onclick = async () => {
+async function startScanner() {
   if (scanning) return;
   scanning = true;
 
@@ -159,6 +162,7 @@ scanBtn.onclick = async () => {
     return;
   }
 
+  // 🔥 HARD RESET camera
   if (stream) {
     stream.getTracks().forEach(t => t.stop());
     stream = null;
@@ -172,26 +176,43 @@ scanBtn.onclick = async () => {
 
   video.srcObject = stream;
   video.style.display = "block";
+  video.setAttribute("playsinline", true);
   await video.play();
 
-  const scanLoop = async () => {
+  async function scanLoop() {
     if (!scanning) return;
 
-    const codes = await detector.detect(video);
-    if (codes.length) {
-      scanning = false;
-      stream.getTracks().forEach(t => t.stop());
-      stream = null;
+    try {
+      const codes = await detector.detect(video);
+      if (codes.length > 0) {
+        scanning = false;
 
-      window.location.href = codes[0].rawValue;
-      return;
+        // Stop camera cleanly
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+
+        const scanned = codes[0].rawValue;
+
+        const targetUrl = scanned.startsWith("http")
+          ? scanned
+          : new URL(scanned, window.location.origin).href;
+
+        window.location.href = targetUrl;
+        return;
+      }
+    } catch (e) {
+      console.warn("Scan error:", e);
     }
+
     requestAnimationFrame(scanLoop);
-  };
+  }
 
   scanLoop();
-};
+}
 
+scanBtn.addEventListener("click", startScanner);
+
+// 🔒 Extra safety: stop camera if user switches tabs
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && stream) {
     stream.getTracks().forEach(t => t.stop());
@@ -199,6 +220,7 @@ document.addEventListener("visibilitychange", () => {
     scanning = false;
   }
 });
+
 </script>
 
 </body>
