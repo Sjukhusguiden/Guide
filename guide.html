@@ -28,24 +28,21 @@ body {
 
 button {
   margin-top: 20px;
-  padding: 16px 24px;
-  font-size: 20px;
+  padding: 15px 25px;
+  font-size: 18px;
   border-radius: 12px;
   border: none;
-  background: #007bff;
+  background: #0078d4;
   color: white;
-}
-
-button:active {
-  background: #0056b3;
+  cursor: pointer;
 }
 
 video {
+  display: none;
   width: 100%;
   max-width: 400px;
-  margin-top: 20px;
-  border-radius: 12px;
-  display: none;
+  margin: 20px auto;
+  border-radius: 16px;
 }
 
 /* ===== Mobil / portrait ===== */
@@ -65,7 +62,8 @@ video {
 <div class="box" id="instruction">Laddar...</div>
 
 <button id="scanBtn">📷 Skanna nästa QR-kod</button>
-<video id="video"></video>
+
+<video id="camera" playsinline></video>
 
 <div class="small" id="debug"></div>
 
@@ -101,24 +99,16 @@ const routes = {
 };
 
 // =======================
-// URL + LAGRING
+// LAGRING & VISA INSTRUKTION
 // =======================
-const params = new URLSearchParams(window.location.search);
-let step = parseInt(params.get("step") || "1");
-
-if (params.get("route")) localStorage.setItem("route", params.get("route"));
-if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
-
-const route = localStorage.getItem("route");
-const dest = localStorage.getItem("dest");
-
-// =======================
-// VISA INSTRUKTION
-// =======================
+let step = 1;
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
 
 function updateInstruction() {
+  const route = localStorage.getItem("route");
+  const dest = localStorage.getItem("dest");
+
   if (!route || !dest) {
     instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
     debugDiv.textContent = "";
@@ -153,14 +143,12 @@ function updateInstruction() {
     "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
 }
 
-updateInstruction();
-
 // =======================
-// QR-SCANNER
+// QR-KAMERA SCANNING
 // =======================
 const scanBtn = document.getElementById("scanBtn");
-const video = document.getElementById("video");
-let stream = null;
+const video = document.getElementById("camera");
+let stream, detector;
 let scanning = false;
 
 scanBtn.addEventListener("click", async () => {
@@ -173,12 +161,7 @@ scanBtn.addEventListener("click", async () => {
     return;
   }
 
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop());
-    stream = null;
-  }
-
-  const detector = new BarcodeDetector({ formats: ["qr_code"] });
+  detector = new BarcodeDetector({ formats: ["qr_code"] });
 
   stream = await navigator.mediaDevices.getUserMedia({
     video: { facingMode: "environment" }
@@ -186,37 +169,46 @@ scanBtn.addEventListener("click", async () => {
 
   video.srcObject = stream;
   video.style.display = "block";
-  video.setAttribute("playsinline", true);
   await video.play();
 
-  async function scanLoop() {
-    if (!scanning) return;
+  requestAnimationFrame(scanLoop);
+});
 
+async function scanLoop() {
+  try {
     const codes = await detector.detect(video);
     if (codes.length > 0) {
-      scanning = false;
-      stream.getTracks().forEach(t => t.stop());
-      stream = null;
-
-      // Handle both start QR and step QR
       const scannedUrl = new URL(codes[0].rawValue, window.location.origin);
-      const scannedStep = scannedUrl.searchParams.get("step");
       const scannedRoute = scannedUrl.searchParams.get("route");
       const scannedDest = scannedUrl.searchParams.get("dest");
+      const scannedStep = scannedUrl.searchParams.get("step");
 
       if (scannedRoute) localStorage.setItem("route", scannedRoute);
       if (scannedDest) localStorage.setItem("dest", scannedDest);
       if (scannedStep) step = parseInt(scannedStep);
 
+      stopCamera();
       updateInstruction();
+      scanning = false;
       return;
     }
+  } catch (e) {}
 
-    requestAnimationFrame(scanLoop);
+  requestAnimationFrame(scanLoop);
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
   }
+  video.style.display = "none";
+}
 
-  scanLoop();
-});
+// =======================
+// INIT
+// =======================
+updateInstruction();
 </script>
 
 </body>
