@@ -26,19 +26,7 @@ body {
   color: #666;
 }
 
-button {
-  margin-top: 20px;
-  padding: 15px 25px;
-  font-size: 18px;
-  border-radius: 12px;
-  border: none;
-  background: #0078d4;
-  color: white;
-  cursor: pointer;
-}
-
-video {
-  display: none;
+#reader {
   width: 100%;
   max-width: 400px;
   margin: 20px auto;
@@ -53,6 +41,10 @@ video {
   .small { font-size: 14px; }
 }
 </style>
+
+<!-- Include html5-qrcode library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
+
 </head>
 
 <body>
@@ -60,16 +52,12 @@ video {
 <h1>📍 QR Navigation Test</h1>
 
 <div class="box" id="instruction">Laddar...</div>
-
-<button id="scanBtn">📷 Skanna nästa QR-kod</button>
-
-<video id="camera" playsinline></video>
-
+<div id="reader"></div>
 <div class="small" id="debug"></div>
 
 <script>
 // =======================
-// ROUTES
+// RUTTER MED STARTPUNKTER
 // =======================
 const routes = {
   entréA: {
@@ -86,6 +74,7 @@ const routes = {
       4: "🚑 Akuten: Du är framme"
     }
   },
+
   entréB: {
     C303: {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
@@ -98,22 +87,24 @@ const routes = {
 };
 
 // =======================
-// DISPLAY INSTRUCTIONS
+// VISA INSTRUKTION
 // =======================
-function showInstruction(route, dest, step) {
-  const instructionDiv = document.getElementById("instruction");
-  const debugDiv = document.getElementById("debug");
+const instructionDiv = document.getElementById("instruction");
+const debugDiv = document.getElementById("debug");
 
+let route = localStorage.getItem("route");
+let dest = localStorage.getItem("dest");
+let step = parseInt(localStorage.getItem("step") || "1");
+
+function updateInstruction() {
   if (!route || !dest) {
     instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
-    debugDiv.textContent = "";
     return;
   }
 
   const routeData = routes[route]?.[dest];
   if (!routeData) {
     instructionDiv.textContent = "❌ Ingen väg hittades";
-    debugDiv.textContent = "";
     return;
   }
 
@@ -123,6 +114,7 @@ function showInstruction(route, dest, step) {
 
   instructionDiv.textContent = routeData[step];
 
+  // Om sista steget, lägg till länk till formulär
   if (step === maxStep) {
     const formLink = document.createElement("a");
     formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
@@ -133,44 +125,47 @@ function showInstruction(route, dest, step) {
     instructionDiv.appendChild(formLink);
   }
 
-  debugDiv.textContent = `Start: ${route} | Destination: ${dest} | Steg: ${step}`;
+  debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
 }
 
+// Initial instruction display
+updateInstruction();
+
 // =======================
-// QR CODE SCANNING
+// QR SCANNING MED html5-qrcode
 // =======================
-function parseQRCode(value) {
+function onScanSuccess(decodedText) {
   try {
-    const url = new URL(value);
-    const step = parseInt(url.searchParams.get("step")) || 1;
-    const route = url.searchParams.get("route");
-    const dest = url.searchParams.get("dest");
-    return { route, dest, step };
-  } catch {
-    return null;
+    const url = new URL(decodedText);
+    const params = new URLSearchParams(url.search);
+    const newRoute = params.get("route");
+    const newDest = params.get("dest");
+    const newStep = parseInt(params.get("step"));
+
+    if (newRoute) localStorage.setItem("route", newRoute);
+    if (newDest) localStorage.setItem("dest", newDest);
+    if (newStep) localStorage.setItem("step", newStep);
+
+    route = localStorage.getItem("route");
+    dest = localStorage.getItem("dest");
+    step = parseInt(localStorage.getItem("step") || "1");
+
+    updateInstruction();
+  } catch (e) {
+    console.error("Invalid QR code", e);
   }
 }
 
-const html5QrCode = new Html5Qrcode("qr-reader");
-const qrConfig = { fps: 10, qrbox: 250 };
-
-html5QrCode.start(
+// Start scanning continuously
+const html5QrcodeScanner = new Html5Qrcode("reader");
+html5QrcodeScanner.start(
   { facingMode: "environment" },
-  qrConfig,
-  (decodedText, decodedResult) => {
-    const qrData = parseQRCode(decodedText);
-    if (qrData) {
-      showInstruction(qrData.route, qrData.dest, qrData.step);
-    } else {
-      console.log("Invalid QR:", decodedText);
-    }
-  },
-  (errorMessage) => {
-    // optional: console.log("Scan error:", errorMessage);
-  }
-);
+  { fps: 10, qrbox: 250 },
+  onScanSuccess
+).catch(err => {
+  console.error("QR scanner error", err);
+});
 </script>
 
 </body>
 </html>
-
