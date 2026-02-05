@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Välj mottagning</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  padding: 40px;
+  text-align: center;
+}
+
+.card {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  max-width: 600px;
+  margin: auto;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+p {
+  color: #555;
+}
+
+a {
+  display: block;
+  margin: 12px 0;
+  padding: 18px;
+  background: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-size: 22px;
+}
+
+a:hover {
+  background: #0056b3;
+}
+
+/* ===== Mobil / portrait ===== */
+@media (max-width: 768px) {
+
+  body {
+    padding: 20px;
+  }
+
+  .card {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  p {
+    font-size: 15px;
+  }
+
+  a {
+    font-size: 20px;
+    padding: 16px;
+  }
+}
+</style>
+
+<!-- ======================= -->
+<!-- CLEAR NAVIGATION CACHE -->
+<!-- ======================= -->
+<script>
+  // Remove any stored route/destination when this page loads
+  localStorage.removeItem("route");
+  localStorage.removeItem("dest");
+</script>
+
+</head>
+
+<body>
+
+<div class="card">
+  <h1>📍 Välj mottagning (Entre B Våning 1)</h1>
+  <p>Välj din destination</p>
+
+  <!-- Links to start navigation -->
+  <a href="guide.html?route=entréB&dest=C303&step=1">🧪 C303 (Entré B Våning 1)</a>
+
+
+</div>
+
+</body>
+</html>
