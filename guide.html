@@ -149,42 +149,51 @@ if (!route || !dest) {
 }
 
 // =======================
-// QR-SCANNER (HTML5 QR CODE)
+// UNIVERSAL QR SCANNER
 // =======================
 const scanBtn = document.getElementById("scanBtn");
 const cameraDiv = document.getElementById("camera");
-
 let html5QrcodeScanner;
 
 scanBtn.addEventListener("click", async () => {
-  scanBtn.disabled = true; // prevent multiple clicks
+  scanBtn.disabled = true;
   instructionDiv.innerHTML = "🔄 <strong>Öppnar kamera…</strong>";
 
   html5QrcodeScanner = new Html5Qrcode("camera");
 
-  const config = { fps: 10, qrbox: 250, aspectRatio: 1.0 };
+  const config = {
+    fps: 10,
+    qrbox: { width: 500, height: 500 }, // large box for long-range scanning
+    aspectRatio: 1.0,
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+  };
+
+  // Flexible camera config works on Android + iOS
+  const cameraConfig = {
+    facingMode: "environment",
+    width: { ideal: 1280 },
+    height: { ideal: 720 }
+  };
 
   html5QrcodeScanner.start(
-    { facingMode: "environment" },
+    cameraConfig,
     config,
-    (decodedText, decodedResult) => {
+    (decodedText) => {
       // ✅ QR scanned
       instructionDiv.innerHTML = "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
       instructionDiv.style.fontSize = "28px";
       debugDiv.textContent = "";
 
-      // Stop camera AFTER delay
+      // Stop camera AFTER short delay
       setTimeout(() => {
         html5QrcodeScanner.stop().then(() => {
           cameraDiv.style.display = "none";
-          // Redirect to scanned URL
           window.location.href = decodedText;
         }).catch(err => console.error(err));
       }, 1200);
     },
     (errorMessage) => {
-      // optional: show scanning errors
-      // console.log("QR scan error:", errorMessage);
+      // optional: ignore scan errors
     }
   ).catch(err => {
     alert("❌ Kunde inte öppna kameran: " + err);
