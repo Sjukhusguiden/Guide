@@ -57,9 +57,6 @@ body {
   .small { font-size: 14px; }
 }
 </style>
-
-<!-- Load HTML5 QR Code library first -->
-<script src="https://unpkg.com/html5-qrcode@2.3.9/minified/html5-qrcode.min.js"></script>
 </head>
 
 <body>
@@ -69,134 +66,160 @@ body {
 <div class="small" id="debug"></div>
 
 <button id="scanBtn">📷 Skanna ny QR-kod</button>
-<div id="camera"></div>
+<video id="camera" playsinline></video>
 
 <script>
-window.onload = function() {
-  // =======================
-  // RUTTER MED STARTPUNKTER
-  // =======================
-  const routes = {
-    entréA: {
-      T4: {
-        1: "🩻 T4: Ta trappan up 2 våningar",
-        2: "🩻 T4: Gå rakt fram till trappan längst bort i korridoren",
-        3: "🩻 T4: Ta rampen up till närmaste ingång till vänster",
-        4: "🩻 T4: Du är nu framme i korridoren med T4 klassrummen"
-      },
-      akuten: {
-        1: "🚑 Akuten: Gå rakt fram från entré A",
-        2: "🚑 Akuten: Sväng höger",
-        3: "🚑 Akuten: Följ röda linjen",
-        4: "🚑 Akuten: Du är framme"
-      }
+// =======================
+// RUTTER MED STARTPUNKTER
+// =======================
+const routes = {
+  entréA: {
+    T4: {
+      1: "🩻 T4: Ta trappan up 2 våningar",
+      2: "🩻 T4: Gå rakt fram till trappan längst bort i korridoren",
+      3: "🩻 T4: Ta rampen up till närmaste ingång till vänster",
+      4: "🩻 T4: Du är nu framme i korridoren med T4 klassrummen"
     },
-    entréB: {
-      C303: {
-        1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
-        2: "🧪 C303: Gå till slutet av korridoren",
-        3: "🧪 C303: Ta trappan upp till kopiatorn",
-        4: "🧪 C303: Gå fram till tredje dörren i korridoren, på den står det C303",
-        5: "🧪 C303: Du är nu framme"
-      }
+    akuten: {
+      1: "🚑 Akuten: Gå rakt fram från entré A",
+      2: "🚑 Akuten: Sväng höger",
+      3: "🚑 Akuten: Följ röda linjen",
+      4: "🚑 Akuten: Du är framme"
     }
-  };
+  },
 
-  // =======================
-  // URL + LAGRING
-  // =======================
-  const params = new URLSearchParams(window.location.search);
-  let step = parseInt(params.get("step") || "1");
-
-  if (params.get("route")) localStorage.setItem("route", params.get("route"));
-  if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
-
-  const route = localStorage.getItem("route");
-  const dest = localStorage.getItem("dest");
-
-  // =======================
-  // VISA INSTRUKTION
-  // =======================
-  const instructionDiv = document.getElementById("instruction");
-  const debugDiv = document.getElementById("debug");
-
-  if (!route || !dest) {
-    instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
-  } else {
-    const routeData = routes[route]?.[dest];
-
-    if (!routeData) {
-      instructionDiv.textContent = "❌ Ingen väg hittades";
-    } else {
-      const maxStep = Math.max(...Object.keys(routeData).map(Number));
-      if (step < 1) step = 1;
-      if (step > maxStep) step = maxStep;
-
-      instructionDiv.textContent = routeData[step];
-
-      if (step === maxStep) {
-        const formLink = document.createElement("a");
-        formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
-        formLink.textContent = "✅ Fyll i formuläret här";
-        formLink.style.display = "block";
-        formLink.style.marginTop = "20px";
-        formLink.style.fontSize = "20px";
-        instructionDiv.appendChild(formLink);
-      }
-
-      debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
+  entréB: {
+    C303: {
+      1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
+      2: "🧪 C303: Gå till slutet av korridoren",
+      3: "🧪 C303: Ta trappan upp till kopiatorn",
+      4: "🧪 C303: Gå fram till tredje dörren i korridoren, på den står det C303",
+      5: "🧪 C303: Du är nu framme"
     }
   }
+};
 
-  // =======================
-  // UNIVERSAL QR SCANNER
-  // =======================
-  const scanBtn = document.getElementById("scanBtn");
-  const cameraDiv = document.getElementById("camera");
-  let html5QrcodeScanner;
+// =======================
+// URL + LAGRING
+// =======================
+const params = new URLSearchParams(window.location.search);
+let step = parseInt(params.get("step") || "1");
 
-  scanBtn.addEventListener("click", async () => {
-    scanBtn.disabled = true;
-    instructionDiv.innerHTML = "🔄 <strong>Öppnar kamera…</strong>";
+if (params.get("route")) localStorage.setItem("route", params.get("route"));
+if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
 
-    html5QrcodeScanner = new Html5Qrcode("camera");
+const route = localStorage.getItem("route");
+const dest = localStorage.getItem("dest");
 
-    const config = {
-      fps: 10,
-      qrbox: { width: 500, height: 500 }, // long-range scanning
-      aspectRatio: 1.0,
-      experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-    };
+// =======================
+// VISA INSTRUKTION
+// =======================
+const instructionDiv = document.getElementById("instruction");
+const debugDiv = document.getElementById("debug");
 
-    const cameraConfig = { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } };
+if (!route || !dest) {
+  instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
+} else {
+  const routeData = routes[route]?.[dest];
 
-    html5QrcodeScanner.start(
-      cameraConfig,
-      config,
-      (decodedText) => {
-        instructionDiv.innerHTML = "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
-        instructionDiv.style.fontSize = "28px";
-        debugDiv.textContent = "";
+  if (!routeData) {
+    instructionDiv.textContent = "❌ Ingen väg hittades";
+  } else {
+    const maxStep = Math.max(...Object.keys(routeData).map(Number));
+    if (step < 1) step = 1;
+    if (step > maxStep) step = maxStep;
 
-        setTimeout(() => {
-          html5QrcodeScanner.stop().then(() => {
-            cameraDiv.style.display = "none";
-            window.location.href = decodedText;
-          }).catch(err => console.error(err));
-        }, 1200);
-      },
-      (errorMessage) => {
-        // optional: ignore scan errors
+    instructionDiv.textContent = routeData[step];
+
+    if (step === maxStep) {
+      const formLink = document.createElement("a");
+      formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
+      formLink.textContent = "✅ Fyll i formuläret här";
+      formLink.style.display = "block";
+      formLink.style.marginTop = "20px";
+      formLink.style.fontSize = "20px";
+      instructionDiv.appendChild(formLink);
+    }
+
+    debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
+  }
+}
+
+// =======================
+// QR-SCANNER (KAMERA)
+// =======================
+const scanBtn = document.getElementById("scanBtn");
+const video = document.getElementById("camera");
+
+let stream;
+let scanning = false;
+
+scanBtn.addEventListener("click", async () => {
+  if (!("BarcodeDetector" in window)) {
+    alert("❌ QR-skanning stöds inte i denna webbläsare");
+    return;
+  }
+
+  const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
+  try {
+    // 🔧 Higher resolution = better for large QR codes
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
       }
-    ).catch(err => {
-      alert("❌ Kunde inte öppna kameran: " + err);
-      scanBtn.disabled = false;
     });
 
-    cameraDiv.style.display = "block";
-  });
+    video.srcObject = stream;
+    video.style.display = "block";
+    await video.play();
+    scanning = true;
 
-};
+    // 👴 Clear instruction for users
+    instructionDiv.innerHTML =
+      "📷 Rikta kameran så <strong>hela QR-koden syns</strong><br><br>Håll lite avstånd";
+
+    scanLoop(detector);
+  } catch {
+    alert("❌ Kunde inte öppna kameran");
+  }
+});
+
+async function scanLoop(detector) {
+  if (!scanning) return;
+
+  try {
+    const codes = await detector.detect(video);
+    if (codes.length > 0) {
+      scanning = false;
+
+      instructionDiv.innerHTML =
+        "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
+      instructionDiv.style.fontSize = "28px";
+      debugDiv.textContent = "";
+
+      // ⏳ Delay BEFORE closing camera
+      setTimeout(() => {
+        video.pause();
+        video.srcObject.getTracks().forEach(t => t.stop());
+        video.style.display = "none";
+
+        // ➡️ Redirect
+        setTimeout(() => {
+          window.location.href = codes[0].rawValue;
+        }, 400);
+
+      }, 1000);
+
+      return;
+    }
+  } catch {}
+
+  // 🐢 Slower loop = better focus
+  setTimeout(() => scanLoop(detector), 120);
+}
 </script>
 
 </body>
