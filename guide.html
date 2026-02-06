@@ -57,6 +57,9 @@ body {
   .small { font-size: 14px; }
 }
 </style>
+
+<!-- HTML5 QR Code library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.9/minified/html5-qrcode.min.js"></script>
 </head>
 
 <body>
@@ -66,7 +69,7 @@ body {
 <div class="small" id="debug"></div>
 
 <button id="scanBtn">📷 Skanna ny QR-kod</button>
-<video id="camera" playsinline></video>
+<div id="camera"></div>
 
 <script>
 // =======================
@@ -146,80 +149,50 @@ if (!route || !dest) {
 }
 
 // =======================
-// QR-SCANNER (KAMERA)
+// QR-SCANNER (HTML5 QR CODE)
 // =======================
 const scanBtn = document.getElementById("scanBtn");
-const video = document.getElementById("camera");
+const cameraDiv = document.getElementById("camera");
 
-let stream;
-let scanning = false;
+let html5QrcodeScanner;
 
 scanBtn.addEventListener("click", async () => {
-  if (!("BarcodeDetector" in window)) {
-    alert("❌ QR-skanning stöds inte i denna webbläsare");
-    return;
-  }
+  scanBtn.disabled = true; // prevent multiple clicks
+  instructionDiv.innerHTML = "🔄 <strong>Öppnar kamera…</strong>";
 
-  const detector = new BarcodeDetector({ formats: ["qr_code"] });
+  html5QrcodeScanner = new Html5Qrcode("camera");
 
-  try {
-    // 🔧 Higher resolution = better for large QR codes
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment",
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      }
-    });
+  const config = { fps: 10, qrbox: 250, aspectRatio: 1.0 };
 
-    video.srcObject = stream;
-    video.style.display = "block";
-    await video.play();
-    scanning = true;
-
-    // 👴 Clear instruction for users
-    instructionDiv.innerHTML =
-      "📷 Rikta kameran så <strong>hela QR-koden syns</strong><br><br>Håll lite avstånd";
-
-    scanLoop(detector);
-  } catch {
-    alert("❌ Kunde inte öppna kameran");
-  }
-});
-
-async function scanLoop(detector) {
-  if (!scanning) return;
-
-  try {
-    const codes = await detector.detect(video);
-    if (codes.length > 0) {
-      scanning = false;
-
-      instructionDiv.innerHTML =
-        "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
+  html5QrcodeScanner.start(
+    { facingMode: "environment" },
+    config,
+    (decodedText, decodedResult) => {
+      // ✅ QR scanned
+      instructionDiv.innerHTML = "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
       instructionDiv.style.fontSize = "28px";
       debugDiv.textContent = "";
 
-      // ⏳ Delay BEFORE closing camera
+      // Stop camera AFTER delay
       setTimeout(() => {
-        video.pause();
-        video.srcObject.getTracks().forEach(t => t.stop());
-        video.style.display = "none";
-
-        // ➡️ Redirect
-        setTimeout(() => {
-          window.location.href = codes[0].rawValue;
-        }, 400);
-
-      }, 1000);
-
-      return;
+        html5QrcodeScanner.stop().then(() => {
+          cameraDiv.style.display = "none";
+          // Redirect to scanned URL
+          window.location.href = decodedText;
+        }).catch(err => console.error(err));
+      }, 1200);
+    },
+    (errorMessage) => {
+      // optional: show scanning errors
+      // console.log("QR scan error:", errorMessage);
     }
-  } catch {}
+  ).catch(err => {
+    alert("❌ Kunde inte öppna kameran: " + err);
+    scanBtn.disabled = false;
+  });
 
-  // 🐢 Slower loop = better focus
-  setTimeout(() => scanLoop(detector), 120);
-}
+  cameraDiv.style.display = "block";
+});
 </script>
 
 </body>
