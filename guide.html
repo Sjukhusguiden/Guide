@@ -93,7 +93,7 @@ const routes = {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
       2: "🧪 C303: Gå till slutet av korridoren",
       3: "🧪 C303: Ta trappan upp till kopiatorn",
-      4: "🧪 C303: gå framm till tredje dörren i korridoren, på den står det C303",
+      4: "🧪 C303: Gå fram till tredje dörren i korridoren, på den står det C303",
       5: "🧪 C303: Du är nu framme"
     }
   }
@@ -189,7 +189,16 @@ async function scanLoop(detector) {
       video.srcObject.getTracks().forEach(t => t.stop());
       video.style.display = "none";
 
-      window.location.href = codes[0].rawValue;
+      // 👇 Friendly confirmation before redirect
+      instructionDiv.innerHTML =
+        "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
+      instructionDiv.style.fontSize = "28px";
+      debugDiv.textContent = "";
+
+      setTimeout(() => {
+        window.location.href = codes[0].rawValue;
+      }, 1200);
+
       return;
     }
   } catch {}
