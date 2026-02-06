@@ -163,14 +163,23 @@ scanBtn.addEventListener("click", async () => {
   const detector = new BarcodeDetector({ formats: ["qr_code"] });
 
   try {
+    // 🔧 Higher resolution = better for large QR codes
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
     });
 
     video.srcObject = stream;
     video.style.display = "block";
     await video.play();
     scanning = true;
+
+    // 👴 Clear instruction for users
+    instructionDiv.innerHTML =
+      "📷 Rikta kameran så <strong>hela QR-koden syns</strong><br><br>Håll lite avstånd";
 
     scanLoop(detector);
   } catch {
@@ -186,7 +195,6 @@ async function scanLoop(detector) {
     if (codes.length > 0) {
       scanning = false;
 
-      // ✅ Show confirmation while camera is still visible
       instructionDiv.innerHTML =
         "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
       instructionDiv.style.fontSize = "28px";
@@ -198,7 +206,7 @@ async function scanLoop(detector) {
         video.srcObject.getTracks().forEach(t => t.stop());
         video.style.display = "none";
 
-        // ➡️ Redirect after camera closes
+        // ➡️ Redirect
         setTimeout(() => {
           window.location.href = codes[0].rawValue;
         }, 400);
@@ -209,7 +217,8 @@ async function scanLoop(detector) {
     }
   } catch {}
 
-  requestAnimationFrame(() => scanLoop(detector));
+  // 🐢 Slower loop = better focus
+  setTimeout(() => scanLoop(detector), 120);
 }
 </script>
 
