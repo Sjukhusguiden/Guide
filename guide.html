@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR-kod vägledning Sundsvalls sjukhus</title>
 
-<!-- Include html5-qrcode library -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
@@ -14,6 +13,7 @@ body {
   text-align: center;
   padding: 40px;
   background: #f2f2f2;
+  display:flex;
 }
 
 .box {
@@ -40,10 +40,6 @@ body {
   cursor: pointer;
 }
 
-#scanBtn:hover {
-  background: #005fa3;
-}
-
 #camera {
   display: none;
   margin: 20px auto 0;
@@ -52,48 +48,79 @@ body {
   border-radius: 14px;
 }
 
-/* ===== Mobil / portrait ===== */
-@media (max-width: 768px) {
-  body { padding: 20px; }
-  h1 { font-size: 26px; }
-  .box { padding: 30px 20px; font-size: 22px; border-radius: 16px; }
-  .small { font-size: 14px; }
+.guide { width:50%; }
+
+.map {
+  position: relative;
+  width: 50%;
+}
+
+.map img {
+  width: 100%;
+  display: block;
+  border-radius: 14px;
+}
+
+/* SVG overlay */
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Yellow guidance line */
+.overlay path {
+  fill: none;
+  stroke: #ffd400;
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: none;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw 1s ease forwards;
+}
+
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
 }
 </style>
 </head>
 
 <body>
 
-<h1>📍 QR Navigation Test</h1>
-<div class="box" id="instruction">Laddar...</div>
-<div class="small" id="debug"></div>
+<div class="guide">
+  <h1>📍 QR Navigation Test</h1>
+  <div class="box" id="instruction">Laddar...</div>
+  <div class="small" id="debug"></div>
 
-<button id="scanBtn">📷 Skanna ny QR-kod</button>
-<video id="camera" playsinline></video>
-<div id="html5-qrcode" style="width: 100%; max-width: 400px; margin: 20px auto;"></div>
+  <button id="scanBtn">📷 Skanna ny QR-kod</button>
+  <video id="camera" playsinline></video>
+  <div id="html5-qrcode" style="width:100%;max-width:400px;margin:20px auto;"></div>
+</div>
+
+<div class="map">
+  <img src="floor.jpeg" alt="Map">
+  <svg viewBox="0 0 1000 600" class="overlay">
+    <path id="guide-line" d="" />
+  </svg>
+</div>
 
 <script>
 // =======================
-// RUTTER MED STARTPUNKTER
+// ROUTES & LINES PER STEP
 // =======================
 const routes = {
-  entréA: {
-    T4: {
+  "entréA": {
+    "T4": {
       1: "🩻 T4: Ta trappan up 2 våningar",
       2: "🩻 T4: Gå rakt fram till trappan längst bort i korridoren",
       3: "🩻 T4: Ta rampen up till närmaste ingång till vänster",
-      4: "🩻 T4: Du är nu framme i korridoren med T4 klassrummen"
-    },
-    akuten: {
-      1: "🚑 Akuten: Gå rakt fram från entré A",
-      2: "🚑 Akuten: Sväng höger",
-      3: "🚑 Akuten: Följ röda linjen",
-      4: "🚑 Akuten: Du är framme"
+      4: "🩻 T4: Du är nu framme"
     }
   },
-
-  entréB: {
-    C303: {
+  "entréB": {
+    "C303": {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
       2: "🧪 C303: Gå till slutet av korridoren",
       3: "🧪 C303: Ta trappan upp till kopiatorn",
@@ -103,8 +130,25 @@ const routes = {
   }
 };
 
+// Yellow lines per route+destination+step
+const linesByRoute = {
+  "entréA-T4": {
+    1: "M150 350 L500 312",
+    2: "M500 312 L500 160",
+    3: "M500 160 L750 160",
+    4: "M750 160 L750 80"
+  },
+  "entréB-C303": {
+    1: "M100 500 L400 500",
+    2: "M400 500 L400 300",
+    3: "M400 300 L700 300",
+    4: "M700 300 L700 100",
+    5: "M700 100 L900 100"
+  }
+};
+
 // =======================
-// URL + LAGRING
+// URL + STORAGE
 // =======================
 const params = new URLSearchParams(window.location.search);
 let step = parseInt(params.get("step") || "1");
@@ -116,115 +160,81 @@ const route = localStorage.getItem("route");
 const dest = localStorage.getItem("dest");
 
 // =======================
-// VISA INSTRUKTION
+// SHOW INSTRUCTION & LINE
 // =======================
 const instructionDiv = document.getElementById("instruction");
 const debugDiv = document.getElementById("debug");
+const guideLine = document.getElementById("guide-line");
+
+function updateGuideLine() {
+  if (!route || !dest) return;
+
+  const key = `${route}-${dest}`;
+  const stepLines = linesByRoute[key];
+  if (!stepLines || !stepLines[step]) {
+    guideLine.style.display = "none";
+    return;
+  }
+
+  guideLine.setAttribute("d", stepLines[step]);
+  guideLine.style.display = "block";
+  guideLine.style.animation = "none";
+  guideLine.getBoundingClientRect(); // force redraw
+  guideLine.style.animation = "";
+}
 
 function showInstruction() {
   if (!route || !dest) {
     instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
-  } else {
-    const routeData = routes[route]?.[dest];
-
-    if (!routeData) {
-      instructionDiv.textContent = "❌ Ingen väg hittades";
-    } else {
-      const maxStep = Math.max(...Object.keys(routeData).map(Number));
-      if (step < 1) step = 1;
-      if (step > maxStep) step = maxStep;
-
-      instructionDiv.textContent = routeData[step];
-
-      if (step === maxStep) {
-        const formLink = document.createElement("a");
-        formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
-        formLink.textContent = "✅ Fyll i formuläret här";
-        formLink.style.display = "block";
-        formLink.style.marginTop = "20px";
-        formLink.style.fontSize = "20px";
-        instructionDiv.appendChild(formLink);
-      }
-
-      debugDiv.textContent = "Start: " + route + " | Destination: " + dest + " | Steg: " + step;
-    }
+    return;
   }
+
+  const routeData = routes[route]?.[dest];
+  if (!routeData) {
+    instructionDiv.textContent = "❌ Ingen väg hittades";
+    return;
+  }
+
+  const maxStep = Math.max(...Object.keys(routeData));
+  if (step > maxStep) step = maxStep;
+
+  instructionDiv.textContent = routeData[step];
+  debugDiv.textContent = `Start: ${route} | Dest: ${dest} | Steg: ${step}`;
+
+  updateGuideLine();
 }
 
 showInstruction();
 
 // =======================
-// QR-SCANNER
+// QR SCANNER
 // =======================
 const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("camera");
-let stream;
 let scanning = false;
 
 scanBtn.addEventListener("click", async () => {
-  instructionDiv.innerHTML = "📷 Rikta kameran så <strong>hela QR-koden syns</strong><br><br>Håll lite avstånd";
+  instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
 
-  // -------- Try BarcodeDetector first (fast) --------
   if ("BarcodeDetector" in window) {
     const detector = new BarcodeDetector({ formats: ["qr_code"] });
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: {ideal:1920}, height:{ideal:1080} } });
-      video.srcObject = stream;
-      video.style.display = "block";
-      await video.play();
-      scanning = true;
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }});
+    video.srcObject = stream;
+    video.style.display = "block";
+    await video.play();
+    scanning = true;
 
-      scanLoop(detector);
-    } catch {
-      alert("❌ Kunde inte öppna kameran");
-    }
-  } else {
-    // -------- Fallback to html5-qrcode --------
-    const html5QrCode = new Html5Qrcode("html5-qrcode");
-    document.getElementById("html5-qrcode").style.display = "block";
-
-    html5QrCode.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: 250
-      },
-      qrCodeMessage => {
-        // ✅ QR detected
-        instructionDiv.innerHTML = "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
-        debugDiv.textContent = "";
-        html5QrCode.stop().then(() => {
-          setTimeout(() => window.location.href = qrCodeMessage, 1200);
-        });
-      },
-      errorMessage => {
-        // ignore errors
+    (async function loop(){
+      if (!scanning) return;
+      const codes = await detector.detect(video);
+      if (codes.length) {
+        scanning = false;
+        window.location.href = codes[0].rawValue;
       }
-    ).catch(err => {
-      alert("❌ QR-skanner kunde inte starta: " + err);
-    });
+      setTimeout(loop, 150);
+    })();
   }
 });
-
-async function scanLoop(detector) {
-  if (!scanning) return;
-  try {
-    const codes = await detector.detect(video);
-    if (codes.length > 0) {
-      scanning = false;
-      instructionDiv.innerHTML = "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
-      debugDiv.textContent = "";
-      setTimeout(() => {
-        video.pause();
-        video.srcObject.getTracks().forEach(t => t.stop());
-        video.style.display = "none";
-        setTimeout(() => window.location.href = codes[0].rawValue, 400);
-      }, 1000);
-      return;
-    }
-  } catch {}
-  setTimeout(() => scanLoop(detector), 120);
-}
 </script>
 
 </body>
