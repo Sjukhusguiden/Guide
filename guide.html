@@ -100,7 +100,7 @@ body {
 </div>
 
 <div class="map">
-  <img src="floor.jpeg" alt="Map">
+  <img id="floor-map" src="floor1.jpeg" alt="Map">
   <svg viewBox="0 0 1000 600" class="overlay">
     <path id="guide-line" d="" />
   </svg>
@@ -108,7 +108,7 @@ body {
 
 <script>
 // =======================
-// ROUTES & LINES PER STEP
+// ROUTES, LINES & FLOOR IMAGES
 // =======================
 const routes = {
   "entréA": {
@@ -130,7 +130,7 @@ const routes = {
   }
 };
 
-// Yellow lines per route+destination+step
+// Lines per route+destination+step
 const linesByRoute = {
   "entréA-T4": {
     1: "M150 350 L500 312",
@@ -147,6 +147,23 @@ const linesByRoute = {
   }
 };
 
+// Floor images per route+destination+step
+const floorImages = {
+  "entréA-T4": {
+    1: "floor1.jpeg",
+    2: "floor1.jpeg",
+    3: "floor2.jpeg",
+    4: "floor2.jpeg"
+  },
+  "entréB-C303": {
+    1: "floorB1.jpeg",
+    2: "floorB1.jpeg",
+    3: "floorB2.jpeg",
+    4: "floor1.jpeg",
+    5: "floor1.jpeg"
+  }
+};
+
 // =======================
 // URL + STORAGE
 // =======================
@@ -160,28 +177,39 @@ const route = localStorage.getItem("route");
 const dest = localStorage.getItem("dest");
 
 // =======================
-// SHOW INSTRUCTION & LINE
+// UPDATE LINE & IMAGE
 // =======================
-const instructionDiv = document.getElementById("instruction");
-const debugDiv = document.getElementById("debug");
 const guideLine = document.getElementById("guide-line");
+const floorMap = document.getElementById("floor-map");
 
 function updateGuideLine() {
   if (!route || !dest) return;
-
   const key = `${route}-${dest}`;
   const stepLines = linesByRoute[key];
   if (!stepLines || !stepLines[step]) {
     guideLine.style.display = "none";
     return;
   }
-
   guideLine.setAttribute("d", stepLines[step]);
   guideLine.style.display = "block";
   guideLine.style.animation = "none";
-  guideLine.getBoundingClientRect(); // force redraw
+  guideLine.getBoundingClientRect();
   guideLine.style.animation = "";
 }
+
+function updateFloorImage() {
+  if (!route || !dest) return;
+  const key = `${route}-${dest}`;
+  const stepImages = floorImages[key];
+  if (!stepImages || !stepImages[step]) return;
+  floorMap.src = stepImages[step];
+}
+
+// =======================
+// SHOW INSTRUCTION
+// =======================
+const instructionDiv = document.getElementById("instruction");
+const debugDiv = document.getElementById("debug");
 
 function showInstruction() {
   if (!route || !dest) {
@@ -202,6 +230,7 @@ function showInstruction() {
   debugDiv.textContent = `Start: ${route} | Dest: ${dest} | Steg: ${step}`;
 
   updateGuideLine();
+  updateFloorImage();
 }
 
 showInstruction();
