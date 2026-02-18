@@ -1,12 +1,22 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-<meta name="description" content="Digital QR-baserad vägledning för Sundsvalls sjukhus. Hitta rätt avdelning snabbt och enkelt.">
-<meta name="robots" content="index, follow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Primary SEO tags -->
 <title>Vägledning Sundsvalls Sjukhus – Digital QR Guide</title>
 <meta name="description" content="Digital vägledning för Sundsvalls sjukhus. Hitta rätt avdelning snabbt med vår QR-baserade sjukhusguide.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://sjukhusguiden.github.io/Guide/">
+
+<!-- Open Graph for social previews -->
+<meta property="og:title" content="Vägledning Sundsvalls Sjukhus – Digital QR Guide">
+<meta property="og:description" content="Digital QR-baserad vägledning på Sundsvalls sjukhus. Hitta rätt avdelning enkelt.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sjukhusguiden.github.io/Guide/">
+
+<!-- Styles -->
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -46,7 +56,7 @@ a:hover {
   background: #0056b3;
 }
 
-/* ===== Mobil / portrait ===== */
+/* ===== Mobile / portrait ===== */
 @media (max-width: 768px) {
 
   body {
@@ -73,11 +83,8 @@ a:hover {
 }
 </style>
 
-<!-- ======================= -->
-<!-- CLEAR NAVIGATION CACHE -->
-<!-- ======================= -->
+<!-- Clear navigation cache -->
 <script>
-  // Remove any stored route/destination when this page loads
   localStorage.removeItem("route");
   localStorage.removeItem("dest");
 </script>
@@ -88,19 +95,23 @@ a:hover {
 
 <div class="card">
   <h1>📍 Välj mottagning (Entré C Våning 1)</h1>
-  <p>Välj på din destination</p>
+  <p>Välj din destination på Sundsvalls sjukhus</p>
 
   <!-- Links to start navigation -->
   <a href="guide.html?route=entréA&dest=T4&step=1">🩻 T4 klassrum (Entré C Våning 1)</a>
-
-
 </div>
+
+<!-- Collapsible SEO section -->
+<details style="margin-top:40px;">
+  <summary style="font-weight:bold; cursor:pointer;">Om vägledning på Sundsvalls sjukhus</summary>
+  <p style="margin-top:10px; line-height:1.6;">
+    Vägledning Sundsvalls sjukhus gör det enkelt för besökare att hitta rätt avdelning. 
+    Med vår digitala QR-baserade sjukhusguide kan patienter och besökare navigera 
+    smidigt inne på sjukhusområdet. 
+    Guiden sparar tid och minskar stress genom att tydligt visa vägen. 
+    Den digitala vägledningen för Sundsvalls sjukhus är enkel, snabb och användarvänlig.
+  </p>
+</details>
 
 </body>
 </html>
-
-
-
-
-
-
