@@ -40,6 +40,19 @@ body {
   cursor: pointer;
 }
 
+/* NEW: toggle button */
+#toggleMapBtn {
+  display: none;
+  margin-top: 15px;
+  padding: 14px 22px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: none;
+  background: #ffb400;
+  color: black;
+  cursor: pointer;
+}
+
 #camera {
   display: none;
   margin: 20px auto 0;
@@ -84,6 +97,30 @@ body {
 @keyframes draw {
   to { stroke-dashoffset: 0; }
 }
+
+/* =========================
+   MOBILE LAYOUT
+========================= */
+@media (max-width: 900px) {
+
+  body {
+    flex-direction: column;
+  }
+
+  .guide {
+    width: 100%;
+  }
+
+  .map {
+    width: 100%;
+    display: none; /* hidden by default */
+    margin-top: 20px;
+  }
+
+  #toggleMapBtn {
+    display: inline-block;
+  }
+}
 </style>
 </head>
 
@@ -95,6 +132,8 @@ body {
   <div class="small" id="debug"></div>
 
   <button id="scanBtn">📷 Skanna ny QR-kod</button>
+  <button id="toggleMapBtn">🗺 Visa karta</button>
+
   <video id="camera" playsinline></video>
   <div id="html5-qrcode" style="width:100%;max-width:400px;margin:20px auto;"></div>
 </div>
@@ -124,13 +163,12 @@ const routes = {
       1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
       2: "🧪 C303: Gå till slutet av korridoren",
       3: "🧪 C303: Ta trappan upp till kopiatorn",
-      4: "🧪 C303: Gå fram till tredje dörren i korridoren, på den står det C303",
+      4: "🧪 C303: Gå fram till tredje dörren i korridoren",
       5: "🧪 C303: Du är nu framme"
     }
   }
 };
 
-// Lines per route+destination+step
 const linesByRoute = {
   "entréA-T4": {
     1: "M150 350 L500 312",
@@ -147,7 +185,6 @@ const linesByRoute = {
   }
 };
 
-// Floor images per route+destination+step
 const floorImages = {
   "entréA-T4": {
     1: "floor.jpeg",
@@ -176,11 +213,10 @@ if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
 const route = localStorage.getItem("route");
 const dest = localStorage.getItem("dest");
 
-// =======================
-// UPDATE LINE & IMAGE
-// =======================
 const guideLine = document.getElementById("guide-line");
 const floorMap = document.getElementById("floor-map");
+const instructionDiv = document.getElementById("instruction");
+const debugDiv = document.getElementById("debug");
 
 function updateGuideLine() {
   if (!route || !dest) return;
@@ -192,9 +228,6 @@ function updateGuideLine() {
   }
   guideLine.setAttribute("d", stepLines[step]);
   guideLine.style.display = "block";
-  guideLine.style.animation = "none";
-  guideLine.getBoundingClientRect();
-  guideLine.style.animation = "";
 }
 
 function updateFloorImage() {
@@ -204,12 +237,6 @@ function updateFloorImage() {
   if (!stepImages || !stepImages[step]) return;
   floorMap.src = stepImages[step];
 }
-
-// =======================
-// SHOW INSTRUCTION
-// =======================
-const instructionDiv = document.getElementById("instruction");
-const debugDiv = document.getElementById("debug");
 
 function showInstruction() {
   if (!route || !dest) {
@@ -234,6 +261,24 @@ function showInstruction() {
 }
 
 showInstruction();
+
+// =======================
+// MOBILE MAP TOGGLE
+// =======================
+const toggleBtn = document.getElementById("toggleMapBtn");
+const mapDiv = document.querySelector(".map");
+
+toggleBtn.addEventListener("click", () => {
+  const isVisible = mapDiv.style.display === "block";
+
+  if (isVisible) {
+    mapDiv.style.display = "none";
+    toggleBtn.textContent = "🗺 Visa karta";
+  } else {
+    mapDiv.style.display = "block";
+    toggleBtn.textContent = "❌ Dölj karta";
+  }
+});
 
 // =======================
 // QR SCANNER
@@ -268,6 +313,3 @@ scanBtn.addEventListener("click", async () => {
 
 </body>
 </html>
-
-
-
