@@ -255,7 +255,15 @@ function showInstruction() {
 
   instructionDiv.textContent = routeData[step];
   debugDiv.textContent = `Start: ${route} | Dest: ${dest} | Steg: ${step}`;
-
+ if (step === maxStep) {
+        const formLink = document.createElement("a");
+        formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
+        formLink.textContent = "✅ Fyll i formuläret här";
+        formLink.style.display = "block";
+        formLink.style.marginTop = "20px";
+        formLink.style.fontSize = "20px";
+        instructionDiv.appendChild(formLink);
+      }
   updateGuideLine();
   updateFloorImage();
 }
@@ -358,4 +366,5 @@ async function scanLoop(detector) {
 
 </body>
 </html>
+
 
