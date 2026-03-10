@@ -145,16 +145,18 @@ Lämna gärna en recension när du är klar.
 Recensioner
 </h2>
 
-<input id="name" placeholder="Ditt namn">
+<p>
+Här kan du skriva en recension om hur bra vägvisningen fungerade.
+</p>
 
-<textarea id="reviewText"
-placeholder="Skriv din recension"></textarea>
-
-<button onclick="addReview()">
-Skicka recension
-</button>
-
-<div id="reviewList"></div>
+<script src="https://utteranc.es/client.js"
+        repo="Sjukhusguiden/Guide"
+        issue-term="/Guide/"
+        label="recension"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
 
 </section>
 
@@ -175,4 +177,5 @@ Skicka recension
 <script src="script.js"></script>
 
 </body>
+
 </html>
