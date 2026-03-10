@@ -149,14 +149,17 @@ Recensioner
 Här kan du skriva en recension om hur bra vägvisningen fungerade.
 </p>
 
-<script src="https://utteranc.es/client.js"
-        repo="Sjukhusguiden/Guide"
-        issue-term="/Guide/"
-        label="recension"
-        theme="github-light"
-        crossorigin="anonymous"
-        async>
-</script>
+<div class="review-form">
+
+<input id="name" placeholder="Ditt namn (valfritt)">
+
+<textarea id="reviewText" placeholder="Skriv din recension..."></textarea>
+
+<button onclick="submitReview()">Skicka recension</button>
+
+</div>
+
+<div id="reviewsList"></div>
 
 </section>
 
@@ -176,6 +179,76 @@ Här kan du skriva en recension om hur bra vägvisningen fungerade.
 
 <script src="script.js"></script>
 
-</body>
 
+<!-- Firebase Reviews -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCkHZ9nebsrLQg0ovigpxXi9DcoZWIVEhM",
+  authDomain: "sjukhusguiden.firebaseapp.com",
+  projectId: "sjukhusguiden",
+  storageBucket: "sjukhusguiden.firebasestorage.app",
+  messagingSenderId: "122348406165",
+  appId: "1:122348406165:web:e698bf6d32ac22f339a29c",
+  measurementId: "G-3G6D5DZD7Z"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function submitReview(){
+
+const name = document.getElementById("name").value || "Anonym";
+const text = document.getElementById("reviewText").value;
+
+if(text.trim() === "") return;
+
+await addDoc(collection(db,"reviews"),{
+name:name,
+text:text,
+date:Date.now()
+});
+
+document.getElementById("reviewText").value="";
+loadReviews();
+
+}
+
+async function loadReviews(){
+
+const list = document.getElementById("reviewsList");
+list.innerHTML="";
+
+const q = query(collection(db,"reviews"),orderBy("date","desc"));
+
+const snapshot = await getDocs(q);
+
+snapshot.forEach(doc=>{
+
+const data = doc.data();
+
+const div = document.createElement("div");
+div.className="review";
+
+div.innerHTML = `
+<b>${data.name}</b>
+<p>${data.text}</p>
+`;
+
+list.appendChild(div);
+
+});
+
+}
+
+loadReviews();
+
+window.submitReview = submitReview;
+
+</script>
+
+</body>
 </html>
