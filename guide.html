@@ -287,10 +287,15 @@ const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("camera");
 let scanning = false;
 scanBtn.addEventListener("click", async () => {
-  // Scroll to bottom of page
-  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-
   instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
+
+  // Make video visible
+  video.style.display = "block";
+
+  // Wait a tick for the layout to update
+  setTimeout(() => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }, 100); // 100ms delay ensures the video box is considered in the page height
 
   if (scanning) return;
 
@@ -303,7 +308,6 @@ scanBtn.addEventListener("click", async () => {
         video: { facingMode: "environment" }
       });
       video.srcObject = stream;
-      video.style.display = "block";
       await video.play();
 
       (async function loop() {
@@ -329,6 +333,3 @@ scanBtn.addEventListener("click", async () => {
 </script>
 </body>
 </html>
-
-
-
