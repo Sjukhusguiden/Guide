@@ -7,16 +7,13 @@ const menuToggle = document.querySelector(".menu-toggle");
 const dropdownMenu = document.getElementById("dropdownMenu");
 
 // Toggle dropdown
-function toggleMenu(){
-
-document
-.getElementById("dropdownMenu")
-.classList
-.toggle("active")
-
+// Global funktion som används av inline onclick
+function toggleMenu() {
+    const dropdownMenu = document.getElementById("dropdownMenu");
+    dropdownMenu.classList.toggle("active");
 }
 
-// Stäng dropdown när man klickar utanför
+// Stänger dropdown om man klickar utanför
 document.addEventListener("click", function(e){
     const dropdownMenu = document.getElementById("dropdownMenu");
     const menuToggle = document.querySelector(".menu-toggle");
@@ -26,12 +23,7 @@ document.addEventListener("click", function(e){
     }
 });
 
-// Klick utanför menyn stänger den
-document.addEventListener("click", function(e) {
-    if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
-        dropdownMenu.classList.remove("active");
-    }
-});
+
 
 // Event listener
 menuToggle.addEventListener("click", toggleMenu);
@@ -206,6 +198,7 @@ async function submitReview() {
     // Ladda om recensioner
     loadReviews();
 }
+
 
 
 
