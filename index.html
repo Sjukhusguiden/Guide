@@ -261,36 +261,50 @@ const qrBox = document.getElementById("html5-qrcode");
 let qrScanner;
 
 scanBtn.addEventListener("click", async () => {
-
-  // Scroll camera into view
-  qrBox.scrollIntoView({behavior:"smooth", block:"center"});
-  qrBox.style.display = "block";
   instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
 
-  // Initialize scanner only once
-  if(!qrScanner) qrScanner = new Html5Qrcode("html5-qrcode");
+  // Make video visible
+  video.style.display = "block";
 
-  try { await qrScanner.stop(); } catch {}
+  // Wait a tick for the layout to update
+  setTimeout(() => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }, 100); // 100ms delay ensures the video box is considered in the page height
 
-  qrScanner.start(
-    { facingMode: "environment" }, // rear camera
-    { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      instructionDiv.innerHTML = "✅ QR-kod skannad!";
-      qrScanner.stop().then(()=>{
-        setTimeout(()=>{ window.location.href = qrCodeMessage; },500);
+  if (scanning) return;
+
+  if ("BarcodeDetector" in window) {
+    scanning = true;
+    const detector = new BarcodeDetector({ formats: ["qr_code"] });
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
       });
-    },
-    errorMessage => {
-      // ignore scanning errors
-    }
-  ).catch(err=>{
-    instructionDiv.innerHTML = "❌ Kunde inte starta kameran. Kontrollera att du tillåter kameran.";
-  });
+      video.srcObject = stream;
+      await video.play();
 
+      (async function loop() {
+        if (!scanning) return;
+        const codes = await detector.detect(video);
+        if (codes.length) {
+          scanning = false;
+          stream.getTracks().forEach(track => track.stop());
+          window.location.href = codes[0].rawValue;
+          return;
+        }
+        setTimeout(loop, 150);
+      })();
+    } catch (err) {
+      instructionDiv.innerHTML = "❌ Kunde inte starta kameran. Kontrollera åtkomst.";
+      scanning = false;
+    }
+  } else {
+    instructionDiv.innerHTML = "❌ Din enhet stöder inte BarcodeDetector.";
+  }
 });
 </script>
 
 </body>
 </html>
+
 
