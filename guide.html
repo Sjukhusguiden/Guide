@@ -286,23 +286,18 @@ toggleBtn.addEventListener("click", () => {
 const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("camera");
 let scanning = false;
-
 scanBtn.addEventListener("click", async () => {
+  // Scroll to bottom of page
+  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+
   instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
 
-  // Scroll the video fully into view
-  const videoTop = video.getBoundingClientRect().top + window.scrollY;
-  const videoHeight = video.offsetHeight;
-  const padding = 20; // extra space above video
-  window.scrollTo({
-    top: videoTop - padding,
-    behavior: "smooth"
-  });
-  // Only start scanner if not already scanning
   if (scanning) return;
+
   if ("BarcodeDetector" in window) {
     scanning = true;
     const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" }
@@ -310,18 +305,19 @@ scanBtn.addEventListener("click", async () => {
       video.srcObject = stream;
       video.style.display = "block";
       await video.play();
+
       (async function loop() {
         if (!scanning) return;
         const codes = await detector.detect(video);
         if (codes.length) {
           scanning = false;
-          // Stop camera after detection
           stream.getTracks().forEach(track => track.stop());
           window.location.href = codes[0].rawValue;
           return;
         }
         setTimeout(loop, 150);
       })();
+
     } catch (err) {
       instructionDiv.innerHTML = "❌ Kunde inte starta kameran. Kontrollera åtkomst.";
       scanning = false;
@@ -331,8 +327,8 @@ scanBtn.addEventListener("click", async () => {
   }
 });
 </script>
-
 </body>
 </html>
+
 
 
