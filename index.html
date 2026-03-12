@@ -289,7 +289,6 @@ window.submitReview = submitReview;
 // =======================
 // QR SCANNER (WORKS ON ALL DEVICES)
 // =======================
-
 const scanBtn = document.getElementById("scanBtn");
 const instructionDiv = document.getElementById("instruction");
 const qrBox = document.getElementById("html5-qrcode");
@@ -308,7 +307,7 @@ scanBtn.addEventListener("click", async () => {
 
   try {
     await qrScanner.start(
-      { facingMode: "environment" }, // prefer rear camera, works on all devices
+      { facingMode: "environment" }, // rear camera
       { fps: 10, qrbox: 250 },
       (qrCodeMessage) => {
         instructionDiv.innerHTML = "✅ QR-kod skannad";
@@ -317,7 +316,7 @@ scanBtn.addEventListener("click", async () => {
         });
       },
       (errorMessage) => {
-        // ignore scan errors, prevents console spam
+        // ignore errors
       }
     );
   } catch (err) {
@@ -328,6 +327,7 @@ scanBtn.addEventListener("click", async () => {
 </script>
 </body>
 </html>
+
 
 
 
