@@ -59,6 +59,60 @@ font-weight:500;
 nav a:hover{
 background:#f2f8fc;
 }
+/* DROPDOWN MENY */
+nav {
+    position: absolute;
+    top: 70px;   /* under header */
+    right: 25px;
+    width: 180px;  /* smalare, avlång ruta */
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: 0.25s;
+    z-index: 1000;
+}
+
+nav.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+nav a {
+    padding: 12px 18px;
+    text-decoration: none;
+    color: #005f8f;
+    font-weight: 500;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+nav a:last-child {
+    border-bottom: none;
+}
+
+nav a:hover {
+    background: #f2f8fc;
+}
+
+/* MENU TOGGLE BUTTON */
+.menu-toggle {
+    font-size: 22px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* MOBILE ADJUSTMENTS */
+@media (max-width: 600px) {
+    nav {
+        width: 140px;
+        right: 15px;
+    }
+}
 
 /* HERO */
 
@@ -242,4 +296,5 @@ text-align:center;
 padding:15px;
 margin-top:40px;
 }
+
 
