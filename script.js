@@ -2,14 +2,24 @@
 // DROPDOWN MENU
 // =======================
 
-function toggleMenu(){
+// Hämta element
+const menuToggle = document.querySelector(".menu-toggle");
+const dropdownMenu = document.getElementById("dropdownMenu");
 
-document
-.getElementById("dropdownMenu")
-.classList
-.toggle("active")
-
+// Toggle dropdown
+function toggleMenu() {
+    dropdownMenu.classList.toggle("active");
 }
+
+// Klick utanför menyn stänger den
+document.addEventListener("click", function(e) {
+    if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+        dropdownMenu.classList.remove("active");
+    }
+});
+
+// Event listener
+menuToggle.addEventListener("click", toggleMenu);
 
 
 
@@ -181,3 +191,4 @@ async function submitReview() {
     // Ladda om recensioner
     loadReviews();
 }
+
