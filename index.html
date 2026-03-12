@@ -94,11 +94,27 @@ Hitta avdelning Sundsvalls sjukhus.
 <section id="reviews" class="reviews">
 <h2><i class="fa-solid fa-star"></i> Recensioner</h2>
 <p>Här kan du skriva en recension om hur bra vägvisningen fungerade.</p>
+
 <div class="review-form">
-<input id="name" placeholder="Ditt namn (valfritt)">
-<textarea id="reviewText" placeholder="Skriv din recension..."></textarea>
-<button onclick="submitReview()">Skicka recension</button>
+
+<div class="star-rating" id="starRating">
+<span class="star" data-value="1">★</span>
+<span class="star" data-value="2">★</span>
+<span class="star" data-value="3">★</span>
+<span class="star" data-value="4">★</span>
+<span class="star" data-value="5">★</span>
 </div>
+
+<input id="name" placeholder="Ditt namn (valfritt)">
+
+<textarea id="reviewText" placeholder="Skriv din recension..."></textarea>
+
+<button onclick="submitReview()">Skicka recension</button>
+
+</div>
+
+<h3 id="averageRating">⭐ 0 / 5</h3>
+
 <div id="reviewsList"></div>
 </section>
 
@@ -107,6 +123,7 @@ Hitta avdelning Sundsvalls sjukhus.
 </footer>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -123,30 +140,117 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-async function submitReview(){
-  const name = document.getElementById("name").value || "Anonym";
-  const text = document.getElementById("reviewText").value;
-  if(text.trim() === "") return;
-  await addDoc(collection(db,"reviews"),{name,name,text,text,date:Date.now()});
-  document.getElementById("reviewText").value="";
-  loadReviews();
+let selectedRating = 0;
+
+
+
+// ⭐ STAR CLICK SYSTEM
+
+const stars = document.querySelectorAll(".star");
+
+stars.forEach(star => {
+
+star.addEventListener("click", () => {
+
+selectedRating = star.dataset.value;
+
+stars.forEach(s => s.classList.remove("selected"));
+
+for(let i=0;i<selectedRating;i++){
+stars[i].classList.add("selected");
 }
 
-async function loadReviews(){
-  const list = document.getElementById("reviewsList");
-  list.innerHTML="";
-  const q = query(collection(db,"reviews"),orderBy("date","desc"));
-  const snapshot = await getDocs(q);
-  snapshot.forEach(doc=>{
-    const data = doc.data();
-    const div = document.createElement("div");
-    div.className="review";
-    div.innerHTML = `<b>${data.name}</b><p>${data.text}</p>`;
-    list.appendChild(div);
-  });
+});
+
+});
+
+
+
+// ⭐ SUBMIT REVIEW
+
+async function submitReview(){
+
+const name = document.getElementById("name").value || "Anonym";
+const text = document.getElementById("reviewText").value;
+
+if(text.trim()==="" || selectedRating==0){
+alert("Välj antal stjärnor och skriv en recension.");
+return;
 }
+
+await addDoc(collection(db,"reviews"),{
+
+name:name,
+text:text,
+rating:Number(selectedRating),
+date:Date.now()
+
+});
+
+document.getElementById("reviewText").value="";
+document.getElementById("name").value="";
+
+selectedRating=0;
+stars.forEach(s => s.classList.remove("selected"));
+
 loadReviews();
+
+}
+
+
+
+// ⭐ LOAD REVIEWS
+
+async function loadReviews(){
+
+const list = document.getElementById("reviewsList");
+
+list.innerHTML="";
+
+const q = query(collection(db,"reviews"),orderBy("date","desc"));
+
+const snapshot = await getDocs(q);
+
+let totalRating = 0;
+let count = 0;
+
+snapshot.forEach(doc=>{
+
+const data = doc.data();
+
+totalRating += data.rating;
+count++;
+
+const div = document.createElement("div");
+
+div.className="review";
+
+div.innerHTML = `
+<b>${data.name}</b>
+<div style="color:#f5b301;font-size:18px;">
+${"★".repeat(data.rating)}${"☆".repeat(5-data.rating)}
+</div>
+<p>${data.text}</p>
+`;
+
+list.appendChild(div);
+
+});
+
+const avg = count ? (totalRating/count).toFixed(1) : 0;
+
+document.getElementById("averageRating").innerHTML =
+`⭐ ${avg} / 5 (${count} recensioner)`;
+
+}
+
+
+
+loadReviews();
+
 window.submitReview = submitReview;
+
+
 
 // =======================
 // QR SCANNER (ONE CAMERA, WORKS ON ALL DEVICES)
@@ -189,3 +293,4 @@ scanBtn.addEventListener("click", async () => {
 
 </body>
 </html>
+
