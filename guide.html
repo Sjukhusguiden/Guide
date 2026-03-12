@@ -289,19 +289,15 @@ let scanning = false;
 scanBtn.addEventListener("click", async () => {
   instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
 
-  // Make video and QR box visible
+  // Show camera and QR box
   video.style.display = "block";
   document.getElementById("html5-qrcode").style.display = "block";
 
-  // Function to scroll repeatedly to the bottom
-  function scrollToBottom() {
+  // Wait for a short delay so elements finish rendering
+  setTimeout(() => {
+    // Scroll to bottom smoothly
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  }
-
-  // Scroll 3 times with short delays to guarantee the bottom is reached
-  setTimeout(scrollToBottom, 100);
-  setTimeout(scrollToBottom, 300);
-  setTimeout(scrollToBottom, 500);
+  }, 500); // 500ms delay can be adjusted if needed
 
   if (scanning) return;
 
@@ -339,4 +335,5 @@ scanBtn.addEventListener("click", async () => {
 </script>
 </body>
 </html>
+
 
