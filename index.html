@@ -287,49 +287,48 @@ loadReviews();
 window.submitReview = submitReview;
 
 // =======================
-// QR SCANNER
+// QR SCANNER (WORKS ON ALL DEVICES)
 // =======================
 
 const scanBtn = document.getElementById("scanBtn");
 const instructionDiv = document.getElementById("instruction");
 const qrBox = document.getElementById("html5-qrcode");
+
 let qrScanner;
+
 scanBtn.addEventListener("click", async () => {
-instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
-qrBox.style.display = "block";
-/* Scroll to camera */
-qrBox.scrollIntoView({
-behavior: "smooth",
-block: "center"
-});
-qrScanner = new Html5Qrcode("html5-qrcode");
-try {
-await qrScanner.start(
-{ facingMode: "environment" }, // fixed
-{
-fps: 10,
-qrbox: 250
-},
-(qrCodeMessage) => {
-instructionDiv.innerHTML = "✅ QR-kod skannad";
-qrScanner.stop().then(() => {
-setTimeout(() => {
-window.location.href = qrCodeMessage;
-}, 500);
-});
-},
-(errorMessage) => {
-// ignore scan errors
-}
-);
-} catch (err) {
-instructionDiv.innerHTML = "❌ Kunde inte starta kameran";
-}
+
+  instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
+
+  // Show the camera area and scroll to it
+  qrBox.style.display = "block";
+  qrBox.scrollIntoView({ behavior: "smooth", block: "center" });
+
+  qrScanner = new Html5Qrcode("html5-qrcode");
+
+  try {
+    await qrScanner.start(
+      { facingMode: "environment" }, // prefer rear camera, works on all devices
+      { fps: 10, qrbox: 250 },
+      (qrCodeMessage) => {
+        instructionDiv.innerHTML = "✅ QR-kod skannad";
+        qrScanner.stop().then(() => {
+          setTimeout(() => { window.location.href = qrCodeMessage; }, 500);
+        });
+      },
+      (errorMessage) => {
+        // ignore scan errors, prevents console spam
+      }
+    );
+  } catch (err) {
+    instructionDiv.innerHTML = "❌ Kunde inte starta kameran. Kontrollera att du tillåter kameran.";
+  }
+
 });
 </script>
-
 </body>
 </html>
+
 
 
 
