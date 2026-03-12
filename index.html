@@ -215,7 +215,6 @@ Här kan du skriva en recension om hur bra vägvisningen fungerade.
 </footer>
 
 
-<script src="https://unpkg.com/html5-qrcode"></script>
 
 <script src="script.js"></script>
 
@@ -290,6 +289,7 @@ window.submitReview = submitReview;
 // =======================
 // QR SCANNER
 // =======================
+
 const scanBtn = document.getElementById("scanBtn");
 const instructionDiv = document.getElementById("instruction");
 const qrBox = document.getElementById("html5-qrcode");
@@ -305,10 +305,10 @@ block: "center"
 qrScanner = new Html5Qrcode("html5-qrcode");
 try {
 await qrScanner.start(
-{ facingMode: { exact: "environment" } }, // forces back camera
+{ facingMode: "environment" }, // fixed
 {
-fps: 12,
-qrbox: 260
+fps: 10,
+qrbox: 250
 },
 (qrCodeMessage) => {
 instructionDiv.innerHTML = "✅ QR-kod skannad";
@@ -322,14 +322,15 @@ window.location.href = qrCodeMessage;
 // ignore scan errors
 }
 );
-} catch {
-instructionDiv.innerHTML = "❌ Kunde inte starta bakre kameran";
+} catch (err) {
+instructionDiv.innerHTML = "❌ Kunde inte starta kameran";
 }
 });
 </script>
 
 </body>
 </html>
+
 
 
 
