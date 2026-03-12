@@ -7,9 +7,13 @@ const menuToggle = document.querySelector(".menu-toggle");
 const dropdownMenu = document.getElementById("dropdownMenu");
 
 // Toggle dropdown
-function toggleMenu() {
-    const dropdownMenu = document.getElementById("dropdownMenu");
-    dropdownMenu.classList.toggle("active");
+function toggleMenu(){
+
+document
+.getElementById("dropdownMenu")
+.classList
+.toggle("active")
+
 }
 
 // Stäng dropdown när man klickar utanför
@@ -202,5 +206,6 @@ async function submitReview() {
     // Ladda om recensioner
     loadReviews();
 }
+
 
 
