@@ -1,3 +1,7 @@
+// =======================
+// DROPDOWN MENU
+// =======================
+
 function toggleMenu(){
 
 document
@@ -8,6 +12,10 @@ document
 }
 
 
+
+// =======================
+// QR SCANNER
+// =======================
 
 const scanBtn=document.getElementById("scanBtn")
 const video=document.getElementById("camera")
@@ -55,6 +63,12 @@ alert("Kunde inte öppna kameran")
 
 }
 
+else{
+
+alert("Din webbläsare stödjer inte QR-skanning.")
+
+}
+
 })
 
 
@@ -71,7 +85,7 @@ if(codes.length>0){
 
 scanning=false
 
-instructionDiv.innerHTML="QR kod skannad"
+instructionDiv.innerHTML="✅ QR kod skannad"
 
 setTimeout(()=>{
 
@@ -95,25 +109,48 @@ setTimeout(()=>scanLoop(detector),120)
 
 
 
-function addReview(){
+// =======================
+// STAR RATING SYSTEM
+// =======================
 
-const name=document.getElementById("name").value
-const text=document.getElementById("reviewText").value
+let selectedRating=0
 
-if(!name||!text){
+const stars=document.querySelectorAll(".star")
 
-alert("Fyll i allt")
+stars.forEach(star=>{
 
-return
+star.addEventListener("click",()=>{
+
+selectedRating=star.dataset.value
+
+stars.forEach(s=>s.classList.remove("selected"))
+
+for(let i=0;i<selectedRating;i++){
+stars[i].classList.add("selected")
+}
+
+})
+
+})
+
+
+
+// gör rating tillgänglig för Firebase script
+
+window.getSelectedRating=function(){
+
+return selectedRating
 
 }
 
-const div=document.createElement("div")
 
-div.className="review-item"
 
-div.innerHTML="<b>"+name+"</b><p>"+text+"</p>"
+// reset rating efter recension
 
-document.getElementById("reviewList").prepend(div)
+window.resetRating=function(){
+
+selectedRating=0
+
+stars.forEach(s=>s.classList.remove("selected"))
 
 }
