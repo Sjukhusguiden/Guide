@@ -1,370 +1,371 @@
 <!DOCTYPE html>
 <html lang="sv">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR-kod vägledning Sundsvalls sjukhus</title>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
+<title>Sjukhusguiden – Vägledning på Sundsvalls sjukhus</title>
 
-<style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 40px;
-  background: #f2f2f2;
-  display:flex;
-}
+<meta name="description" content="Sjukhusguiden hjälper dig att hitta rätt mottagning och rum på Sundsvalls sjukhus med QR-koder och tydliga väginstruktioner.">
 
-.box {
-  background: white;
-  padding: 40px;
-  border-radius: 20px;
-  font-size: 32px;
-}
+<meta name="keywords" content="Sundsvalls sjukhus vägledning, hitta mottagning Sundsvall, sjukhus guide Sundsvall, hospital directions Sundsvall">
 
-.small {
-  margin-top: 20px;
-  font-size: 16px;
-  color: #666;
-}
+<meta name="author" content="Sjukhusguiden">
 
-#scanBtn {
-  margin-top: 25px;
-  padding: 16px 26px;
-  font-size: 18px;
-  border-radius: 14px;
-  border: none;
-  background: #0078d4;
-  color: white;
-  cursor: pointer;
-}
+<link rel="canonical" href="https://sjukhusguiden.github.io/Guide/">
 
-/* NEW: toggle button */
-#toggleMapBtn {
-  display: none;
-  margin-top: 15px;
-  padding: 14px 22px;
-  font-size: 16px;
-  border-radius: 12px;
-  border: none;
-  background: #ffb400;
-  color: black;
-  cursor: pointer;
-}
+<meta property="og:title" content="Sjukhusguiden – Hitta rätt på Sundsvalls sjukhus">
+<meta property="og:description" content="Skanna QR-koder och få vägbeskrivningar till rätt mottagning på Sundsvalls sjukhus.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sjukhusguiden.github.io/Guide/">
 
-#camera {
-  display: none;
-  margin: 20px auto 0;
-  width: 100%;
-  max-width: 400px;
-  border-radius: 14px;
-}
+<link rel="stylesheet" href="style.css">
 
-.guide { width:50%; }
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-.map {
-  position: relative;
-  width: 50%;
-}
-
-.map img {
-  width: 100%;
-  display: block;
-  border-radius: 14px;
-}
-
-/* SVG overlay */
-.overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* Yellow guidance line */
-.overlay path {
-  fill: none;
-  stroke: #ffd400;
-  stroke-width: 14;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  display: none;
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: draw 1s ease forwards;
-}
-
-@keyframes draw {
-  to { stroke-dashoffset: 0; }
-}
-
-/* =========================
-   MOBILE LAYOUT
-========================= */
-@media (max-width: 900px) {
-
-  body {
-    flex-direction: column;
-  }
-
-  .guide {
-    width: 100%;
-  }
-
-  .map {
-    width: 100%;
-    display: none; /* hidden by default */
-    margin-top: 20px;
-  }
-
-  #toggleMapBtn {
-    display: inline-block;
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Sjukhusguiden",
+  "url": "https://sjukhusguiden.github.io/Guide/",
+  "description": "Digital vägledning för att hitta mottagningar och rum på Sundsvalls sjukhus med QR-koder.",
+  "inLanguage": "sv",
+  "about": {
+    "@type": "Hospital",
+    "name": "Sundsvalls sjukhus"
   }
 }
-</style>
+</script>
+
 </head>
 
 <body>
 
-<div class="guide">
-  <h1>📍 QR Navigation Test</h1>
-  <div class="box" id="instruction">Laddar...</div>
-  <div class="small" id="debug"></div>
-
-  <button id="scanBtn">📷 Skanna ny QR-kod</button>
-  <button id="toggleMapBtn">🗺 Visa karta</button>
-
-  <video id="camera" playsinline></video>
-  <div id="html5-qrcode" style="width:100%;max-width:400px;margin:20px auto;"></div>
+<!-- Hidden SEO text -->
+<div style="position:absolute;left:-9999px;">
+Vägledning Sundsvalls sjukhus.
+Hitta rätt mottagning på Sundsvalls sjukhus.
+Digital sjukhusguide för patienter och besökare.
+QR-kod vägvisning inne på sjukhus.
+Sjukhus karta Sundsvall.
+Hitta avdelning Sundsvalls sjukhus.
 </div>
 
-<div class="map">
-  <img id="floor-map" src="floor1.jpeg" alt="Map">
-  <svg viewBox="0 0 1000 600" class="overlay">
-    <path id="guide-line" d="" />
-  </svg>
+<header>
+
+<div class="logo">
+<i class="fa-solid fa-hospital"></i>
+Sjukhusguiden
 </div>
 
-<script>
-// =======================
-// ROUTES, LINES & FLOOR IMAGES
-// =======================
-const routes = {
-  "entréA": {
-    "T4": {
-      1: "🩻 T4: Ta trappan up 2 våningar",
-      2: "🩻 T4: Gå rakt fram till trappan längst bort i korridoren",
-      3: "🩻 T4: Ta rampen up till närmaste ingång till vänster",
-      4: "🩻 T4: Du är nu framme"
-    }
-  },
-  "entréB": {
-    "C303": {
-      1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
-      2: "🧪 C303: Gå till slutet av korridoren",
-      3: "🧪 C303: Ta trappan upp till kopiatorn",
-      4: "🧪 C303: Gå fram till tredje dörren i korridoren",
-      5: "🧪 C303: Du är nu framme"
-    }
-  }
+<div class="menu-toggle" onclick="toggleMenu()">
+<i class="fa-solid fa-bars"></i>
+</div>
+
+</header>
+
+
+<nav id="dropdownMenu">
+
+<a href="#about">
+<i class="fa-solid fa-circle-info"></i>
+Om tjänsten
+</a>
+
+<a href="#how">
+<i class="fa-solid fa-map"></i>
+Hur det fungerar
+</a>
+
+<a href="#reviews">
+<i class="fa-solid fa-comment"></i>
+Recensioner
+</a>
+
+<a href="https://www.1177.se/" target="_blank">
+<i class="fa-solid fa-house"></i>
+1177 Startsida
+</a>
+
+<a href="https://www.1177.se/e-tjanster/" target="_blank">
+<i class="fa-solid fa-comments"></i>
+1177 Online-chatt
+</a>
+
+<a href="tel:1177">
+<i class="fa-solid fa-phone"></i>
+Ring 1177
+</a>
+
+</nav>
+
+
+
+<section class="hero" id="about">
+
+<i class="fa-solid fa-hospital hero-icon"></i>
+
+<h1>Välkommen till Sjukhusguiden</h1>
+
+<p>
+Sjukhusguiden är ett digitalt verktyg som ska hjälpa dig
+att hitta till rätt mottagning och rum på ett simpelt och enkelt sätt.
+</p>
+
+</section>
+
+
+
+<section class="scanner-section">
+
+<h2>
+<i class="fa-solid fa-qrcode"></i>
+QR-kod Scanner
+</h2>
+
+<button id="scanBtn" class="primary-btn">
+<i class="fa-solid fa-camera"></i>
+Starta scanning
+</button>
+
+<div id="instruction"></div>
+
+<video id="camera" autoplay playsinline></video>
+
+<div id="html5-qrcode"></div>
+
+<div id="debug"></div>
+
+</section>
+
+
+
+<section id="how" class="steps">
+
+<h2>
+<i class="fa-solid fa-route"></i>
+Hur man gör
+</h2>
+
+<div class="step-card">
+<h3>Steg 1</h3>
+<p>
+Skanna QR-koden med din kamera och välj mottagning.
+</p>
+</div>
+
+<div class="step-card">
+<h3>Steg 2</h3>
+<p>
+Följ väginstruktionerna och skanna nästa QR-kod
+direkt i hemsidan tills du kommer fram.
+</p>
+</div>
+
+<div class="step-card">
+<h3>Steg 3</h3>
+<p>
+Om alla steg följts på rätt sätt borde du nu vara framme.
+Lämna gärna en recension när du är klar.
+</p>
+</div>
+
+</section>
+
+
+
+<section id="reviews" class="reviews">
+
+<h2>
+<i class="fa-solid fa-star"></i>
+Recensioner
+</h2>
+
+<p>
+Här kan du skriva en recension om hur bra vägvisningen fungerade.
+</p>
+
+<div class="review-form">
+
+<input id="name" placeholder="Ditt namn (valfritt)">
+
+<textarea id="reviewText" placeholder="Skriv din recension..."></textarea>
+
+<button onclick="submitReview()">Skicka recension</button>
+
+</div>
+
+<div id="reviewsList"></div>
+
+</section>
+
+
+
+<footer>
+
+<p>
+<i class="fa-solid fa-hospital"></i>
+© 2026 Sjukhusguiden
+</p>
+
+</footer>
+
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script src="script.js"></script>
+
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCkHZ9nebsrLQg0ovigpxXi9DcoZWIVEhM",
+  authDomain: "sjukhusguiden.firebaseapp.com",
+  projectId: "sjukhusguiden",
+  storageBucket: "sjukhusguiden.firebasestorage.app",
+  messagingSenderId: "122348406165",
+  appId: "1:122348406165:web:e698bf6d32ac22f339a29c",
+  measurementId: "G-3G6D5DZD7Z"
 };
 
-const linesByRoute = {
-  "entréA-T4": {
-    1: "M150 350 L500 312",
-    2: "M500 312 L500 160",
-    3: "M500 160 L750 160",
-    4: "M750 160 L750 80"
-  },
-  "entréB-C303": {
-    1: "M100 500 L400 500",
-    2: "M400 500 L400 300",
-    3: "M400 300 L700 300",
-    4: "M700 300 L700 100",
-    5: "M700 100 L900 100"
-  }
-};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-const floorImages = {
-  "entréA-T4": {
-    1: "floor.jpeg",
-    2: "floor.jpeg",
-    3: "floor.jpeg",
-    4: "floor.jpeg"
-  },
-  "entréB-C303": {
-    1: "floor.jpeg",
-    2: "floor.jpeg",
-    3: "floor.jpeg",
-    4: "floor1.png",
-    5: "floor1.png"
-  }
-};
+async function submitReview(){
 
-// =======================
-// URL + STORAGE
-// =======================
-const params = new URLSearchParams(window.location.search);
-let step = parseInt(params.get("step") || "1");
+const name = document.getElementById("name").value || "Anonym";
+const text = document.getElementById("reviewText").value;
 
-if (params.get("route")) localStorage.setItem("route", params.get("route"));
-if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
+if(text.trim() === "") return;
 
-const route = localStorage.getItem("route");
-const dest = localStorage.getItem("dest");
-
-const guideLine = document.getElementById("guide-line");
-const floorMap = document.getElementById("floor-map");
-const instructionDiv = document.getElementById("instruction");
-const debugDiv = document.getElementById("debug");
-
-function updateGuideLine() {
-  if (!route || !dest) return;
-  const key = `${route}-${dest}`;
-  const stepLines = linesByRoute[key];
-  if (!stepLines || !stepLines[step]) {
-    guideLine.style.display = "none";
-    return;
-  }
-  guideLine.setAttribute("d", stepLines[step]);
-  guideLine.style.display = "block";
-}
-
-function updateFloorImage() {
-  if (!route || !dest) return;
-  const key = `${route}-${dest}`;
-  const stepImages = floorImages[key];
-  if (!stepImages || !stepImages[step]) return;
-  floorMap.src = stepImages[step];
-}
-
-function showInstruction() {
-  if (!route || !dest) {
-    instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
-    return;
-  }
-
-  const routeData = routes[route]?.[dest];
-  if (!routeData) {
-    instructionDiv.textContent = "❌ Ingen väg hittades";
-    return;
-  }
-
-  const maxStep = Math.max(...Object.keys(routeData));
-  if (step > maxStep) step = maxStep;
-
-  instructionDiv.textContent = routeData[step];
-  debugDiv.textContent = `Start: ${route} | Dest: ${dest} | Steg: ${step}`;
- if (step === maxStep) {
-        const formLink = document.createElement("a");
-        formLink.href = "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
-        formLink.textContent = "✅ Fyll i formuläret här";
-        formLink.style.display = "block";
-        formLink.style.marginTop = "20px";
-        formLink.style.fontSize = "20px";
-        instructionDiv.appendChild(formLink);
-      }
-  updateGuideLine();
-  updateFloorImage();
-}
-
-showInstruction();
-
-// =======================
-// MOBILE MAP TOGGLE
-// =======================
-const toggleBtn = document.getElementById("toggleMapBtn");
-const mapDiv = document.querySelector(".map");
-
-toggleBtn.addEventListener("click", () => {
-  const isVisible = mapDiv.style.display === "block";
-
-  if (isVisible) {
-    mapDiv.style.display = "none";
-    toggleBtn.textContent = "🗺 Visa karta";
-  } else {
-    mapDiv.style.display = "block";
-    toggleBtn.textContent = "❌ Dölj karta";
-  }
+await addDoc(collection(db,"reviews"),{
+name:name,
+text:text,
+date:Date.now()
 });
 
-// =======================
-// QR-SCANNER
-// =======================
+document.getElementById("reviewText").value="";
+loadReviews();
+
+}
+
+async function loadReviews(){
+
+const list = document.getElementById("reviewsList");
+list.innerHTML="";
+
+const q = query(collection(db,"reviews"),orderBy("date","desc"));
+
+const snapshot = await getDocs(q);
+
+snapshot.forEach(doc=>{
+
+const data = doc.data();
+
+const div = document.createElement("div");
+div.className="review";
+
+div.innerHTML = `
+<b>${data.name}</b>
+<p>${data.text}</p>
+`;
+
+list.appendChild(div);
+
+});
+
+}
+
+loadReviews();
+
+window.submitReview = submitReview;
+
+
+
 const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("camera");
 let stream;
 let scanning = false;
 
 scanBtn.addEventListener("click", async () => {
-  instructionDiv.innerHTML = "📷 Rikta kameran så <strong>hela QR-koden syns</strong><br><br>Håll lite avstånd";
 
-  // -------- Try BarcodeDetector first (fast) --------
   if ("BarcodeDetector" in window) {
+
     const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: {ideal:1920}, height:{ideal:1080} } });
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width:{ideal:1920}, height:{ideal:1080} }
+      });
+
       video.srcObject = stream;
       video.style.display = "block";
       await video.play();
       scanning = true;
 
       scanLoop(detector);
+
     } catch {
       alert("❌ Kunde inte öppna kameran");
     }
+
   } else {
-    // -------- Fallback to html5-qrcode --------
+
     const html5QrCode = new Html5Qrcode("html5-qrcode");
-    document.getElementById("html5-qrcode").style.display = "block";
 
     html5QrCode.start(
       { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: 250
-      },
+      { fps:10, qrbox:250 },
+
       qrCodeMessage => {
-        // ✅ QR detected
-        instructionDiv.innerHTML = "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
-        debugDiv.textContent = "";
-        html5QrCode.stop().then(() => {
-          setTimeout(() => window.location.href = qrCodeMessage, 1200);
+
+        html5QrCode.stop().then(()=>{
+          setTimeout(()=> window.location.href = qrCodeMessage,1000)
         });
-      },
-      errorMessage => {
-        // ignore errors
+
       }
-    ).catch(err => {
-      alert("❌ QR-skanner kunde inte starta: " + err);
-    });
+    );
+
   }
+
 });
 
-async function scanLoop(detector) {
-  if (!scanning) return;
-  try {
-    const codes = await detector.detect(video);
-    if (codes.length > 0) {
-      scanning = false;
-      instructionDiv.innerHTML = "✅ <strong>QR-koden skannad</strong><br><br>Laddar nästa instruktion…";
-      debugDiv.textContent = "";
-      setTimeout(() => {
-        video.pause();
-        video.srcObject.getTracks().forEach(t => t.stop());
-        video.style.display = "none";
-        setTimeout(() => window.location.href = codes[0].rawValue, 400);
-      }, 1000);
-      return;
-    }
-  } catch {}
-  setTimeout(() => scanLoop(detector), 120);
+async function scanLoop(detector){
+
+if(!scanning) return;
+
+try{
+
+const codes = await detector.detect(video);
+
+if(codes.length>0){
+
+scanning=false;
+
+video.pause();
+video.srcObject.getTracks().forEach(t=>t.stop());
+
+setTimeout(()=> window.location.href = codes[0].rawValue,500);
+
+return;
+
 }
+
+}catch{}
+
+setTimeout(()=> scanLoop(detector),120);
+
+}
+
 </script>
-
-
 
 </body>
 </html>
-
-
