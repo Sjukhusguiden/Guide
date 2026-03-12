@@ -113,44 +113,71 @@ setTimeout(()=>scanLoop(detector),120)
 // STAR RATING SYSTEM
 // =======================
 
-let selectedRating=0
+// =======================
+// LOAD REVIEWS + GENOMSNITTSBETYG
+// =======================
+async function loadReviews(){
+    const list = document.getElementById("reviewsList");
+    list.innerHTML = "";
 
-const stars=document.querySelectorAll(".star")
+    const q = query(collection(db,"reviews"), orderBy("date","desc"));
+    const snapshot = await getDocs(q);
 
-stars.forEach(star=>{
+    let totalRating = 0;
+    let ratingCount = 0;
 
-star.addEventListener("click",()=>{
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const rating = Number(data.rating) || 0; // default 0 om ingen rating finns
 
-selectedRating=star.dataset.value
+        if(rating > 0){
+            totalRating += rating;
+                       ratingCount++;
+        }
 
-stars.forEach(s=>s.classList.remove("selected"))
+        // Skapa review-element
+        const div = document.createElement("div");
+        div.className = "review";
+        div.innerHTML = `
+            <b>${data.name}</b>
+            <div class="review-stars">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
+            <p>${data.text}</p>
+        `;
+        list.appendChild(div);
+    });
 
-for(let i=0;i<selectedRating;i++){
-stars[i].classList.add("selected")
+    // Beräkna genomsnitt
+    const avg = ratingCount ? (totalRating / ratingCount).toFixed(1) : "0";
+    document.getElementById("averageRating").innerHTML = `⭐ ${avg} / 5 (${ratingCount} recensioner)`;
 }
 
-})
+// Anropa för att ladda recensioner direkt när sidan öppnas
+loadReviews();
 
-})
+// Funktion för att skicka review (använder stjärnor)
+async function submitReview() {
+    const name = document.getElementById("name").value || "Anonym";
+    const text = document.getElementById("reviewText").value.trim();
+    const rating = Number(window.getSelectedRating()) || 0;
 
+    if (!text || rating === 0) {
+        alert("Välj antal stjärnor och skriv en recension.");
+        return;
+    }
 
+    // Spara i Firebase
+    await addDoc(collection(db, "reviews"), {
+        name: name,
+        text: text,
+        rating: rating,
+        date: Date.now()
+    });
 
-// gör rating tillgänglig för Firebase script
+    // Rensa formuläret och rating
+    document.getElementById("name").value = "";
+    document.getElementById("reviewText").value = "";
+    window.resetRating();
 
-window.getSelectedRating=function(){
-
-return selectedRating
-
-}
-
-
-
-// reset rating efter recension
-
-window.resetRating=function(){
-
-selectedRating=0
-
-stars.forEach(s=>s.classList.remove("selected"))
-
+    // Ladda om recensioner
+    loadReviews();
 }
