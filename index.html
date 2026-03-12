@@ -292,32 +292,83 @@ window.submitReview = submitReview;
 // =======================
 const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("camera");
+const instructionDiv = document.getElementById("instruction");
+
 let scanning = false;
+let stream = null;
 
 scanBtn.addEventListener("click", async () => {
-  instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
 
-  if ("BarcodeDetector" in window) {
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }});
-    video.srcObject = stream;
-    video.style.display = "block";
-    await video.play();
-    scanning = true;
+instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
 
-    (async function loop(){
-      if (!scanning) return;
-      const codes = await detector.detect(video);
-      if (codes.length) {
-        scanning = false;
-        window.location.href = codes[0].rawValue;
-      }
-      setTimeout(loop, 150);
-    })();
-  }
+try {
+
+if ("BarcodeDetector" in window) {
+
+const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
+stream = await navigator.mediaDevices.getUserMedia({
+video: { facingMode: "environment" }
 });
+
+video.srcObject = stream;
+video.style.display = "block";
+
+await video.play();
+
+scanning = true;
+
+scanLoop(detector);
+
+} else {
+
+instructionDiv.innerHTML = "❌ Din webbläsare stödjer inte QR-skanning";
+
+}
+
+} catch (err) {
+
+// only show error if camera REALLY failed
+instructionDiv.innerHTML = "❌ Kunde inte starta kameran";
+
+}
+
+});
+
+async function scanLoop(detector){
+
+if(!scanning) return;
+
+try{
+
+const codes = await detector.detect(video);
+
+if(codes.length > 0){
+
+scanning = false;
+
+video.pause();
+
+if(stream){
+stream.getTracks().forEach(t => t.stop());
+}
+
+window.location.href = codes[0].rawValue;
+
+return;
+
+}
+
+}catch(e){
+// ignore detection errors silently
+}
+
+setTimeout(()=>scanLoop(detector),150);
+
+}
 </script>
 
 </body>
 </html>
+
 
