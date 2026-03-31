@@ -1,18 +1,12 @@
-// Hämta element
 const menuToggle = document.querySelector(".menu-toggle");
 const dropdownMenu = document.getElementById("dropdownMenu");
 
-// Toggle dropdown
-function toggleMenu(e) {
+menuToggle.addEventListener("click", (e) => {
     dropdownMenu.classList.toggle("active");
-    e.stopPropagation(); // Important! Prevent closing immediately
-}
+    e.stopPropagation();
+});
 
-// Event listener på toggle-knappen
-menuToggle.addEventListener("click", toggleMenu);
-
-// Stänger dropdown om man klickar utanför
-document.addEventListener("click", function(e){
+document.addEventListener("click", (e) => {
     if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
         dropdownMenu.classList.remove("active");
     }
