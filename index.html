@@ -17,7 +17,6 @@
 <meta property="og:description" content="Skanna QR-koder och få vägbeskrivningar till rätt mottagning på Sundsvalls sjukhus.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://sjukhusguiden.github.io/Guide/">
-
 <script src="script.js"></script>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet"
@@ -59,7 +58,14 @@ Hitta avdelning Sundsvalls sjukhus.
 <i class="fa-solid fa-hospital"></i> Sjukhusguiden
 </div>
 
-<nav class="top-menu">
+<!-- FIX: lade till ID -->
+<div class="menu-toggle" id="menuToggle">
+    <i class="fa-solid fa-bars"></i>
+</div>
+</header>
+
+<!-- SAMMA MENY (oförändrad) -->
+<nav id="dropdownMenu">
 <a href="#about"><i class="fa-solid fa-circle-info"></i> Om tjänsten</a>
 <a href="#how"><i class="fa-solid fa-map"></i> Hur det fungerar</a>
 <a href="#reviews"><i class="fa-solid fa-comment"></i> Recensioner</a>
@@ -67,7 +73,6 @@ Hitta avdelning Sundsvalls sjukhus.
 <a href="https://www.1177.se/e-tjanster/" target="_blank"><i class="fa-solid fa-comments"></i> 1177 Online-chatt</a>
 <a href="tel:1177"><i class="fa-solid fa-phone"></i> Ring 1177</a>
 </nav>
-</header>
 
 <section class="hero" id="about">
 <i class="fa-solid fa-hospital hero-icon"></i>
@@ -104,6 +109,7 @@ Hitta avdelning Sundsvalls sjukhus.
 </div>
 
 <input id="name" placeholder="Ditt namn (valfritt)">
+
 <textarea id="reviewText" placeholder="Skriv din recension..."></textarea>
 
 <button onclick="submitReview()">Skicka recension</button>
@@ -139,19 +145,34 @@ const db = getFirestore(app);
 
 let selectedRating = 0;
 
+
+
+// ⭐ STAR CLICK SYSTEM
+
 const stars = document.querySelectorAll(".star");
 
 stars.forEach(star => {
+
 star.addEventListener("click", () => {
+
 selectedRating = star.dataset.value;
+
 stars.forEach(s => s.classList.remove("selected"));
+
 for(let i=0;i<selectedRating;i++){
 stars[i].classList.add("selected");
 }
-});
+
 });
 
+});
+
+
+
+// ⭐ SUBMIT REVIEW
+
 async function submitReview(){
+
 const name = document.getElementById("name").value || "Anonym";
 const text = document.getElementById("reviewText").value;
 
@@ -161,10 +182,12 @@ return;
 }
 
 await addDoc(collection(db,"reviews"),{
+
 name:name,
 text:text,
 rating:Number(selectedRating),
 date:Date.now()
+
 });
 
 document.getElementById("reviewText").value="";
@@ -174,97 +197,116 @@ selectedRating=0;
 stars.forEach(s => s.classList.remove("selected"));
 
 loadReviews();
+
 }
 
+
+
+// ⭐ LOAD REVIEWS
+
 async function loadReviews(){
+
 const list = document.getElementById("reviewsList");
+
 list.innerHTML="";
 
 const q = query(collection(db,"reviews"),orderBy("date","desc"));
+
 const snapshot = await getDocs(q);
 
 let totalRating = 0;
 let count = 0;
 
 snapshot.forEach(doc=>{
+
 const data = doc.data();
 
 totalRating += data.rating;
 count++;
 
 const div = document.createElement("div");
+
 div.className="review";
 
-div.innerHTML = `
+div.innerHTML = 
 <b>${data.name}</b>
 <div style="color:#f5b301;font-size:18px;">
 ${"★".repeat(data.rating)}${"☆".repeat(5-data.rating)}
 </div>
 <p>${data.text}</p>
-`;
+;
 
 list.appendChild(div);
+
 });
 
 const avg = count ? (totalRating/count).toFixed(1) : 0;
 
 document.getElementById("averageRating").innerHTML =
-`⭐ ${avg} / 5 (${count} recensioner)`;
+⭐ ${avg} / 5 (${count} recensioner);
+
 }
+
+
 
 loadReviews();
+
 window.submitReview = submitReview;
 
+
+
+// =======================
 // QR SCANNER
+// =======================
 const scanBtn = document.getElementById("scanBtn");
-const instructionDiv = document.getElementById("instruction");
+const video = document.getElementById("camera");
 let scanning = false;
-
 scanBtn.addEventListener("click", async () => {
-instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
+  instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
 
-document.getElementById("html5-qrcode").style.display = "block";
+  // Show camera and QR box
+  video.style.display = "block";
+  document.getElementById("html5-qrcode").style.display = "block";
 
-if (scanning) return;
+  // Wait for a short delay so elements finish rendering
+  setTimeout(() => {
+    // Scroll to bottom smoothly
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }, 500); // 500ms delay can be adjusted if needed
 
-if ("BarcodeDetector" in window) {
-scanning = true;
+  if (scanning) return;
 
-const detector = new BarcodeDetector({ formats: ["qr_code"] });
+  if ("BarcodeDetector" in window) {
+    scanning = true;
+    const detector = new BarcodeDetector({ formats: ["qr_code"] });
 
-try {
-const stream = await navigator.mediaDevices.getUserMedia({
-video: { facingMode: "environment" }
-});
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
+      video.srcObject = stream;
+      await video.play();
 
-const video = document.createElement("video");
-video.srcObject = stream;
-await video.play();
+      (async function loop() {
+        if (!scanning) return;
+        const codes = await detector.detect(video);
+        if (codes.length) {
+          scanning = false;
+          stream.getTracks().forEach(track => track.stop());
+          window.location.href = codes[0].rawValue;
+          return;
+        }
+        setTimeout(loop, 150);
+      })();
 
-(async function loop() {
-if (!scanning) return;
-
-const codes = await detector.detect(video);
-
-if (codes.length) {
-scanning = false;
-stream.getTracks().forEach(track => track.stop());
-window.location.href = codes[0].rawValue;
-return;
-}
-
-setTimeout(loop, 150);
-})();
-
-} catch (err) {
-instructionDiv.innerHTML = "❌ Kunde inte starta kameran.";
-scanning = false;
-}
-} else {
-instructionDiv.innerHTML = "❌ Din enhet stöder inte QR scanning.";
-}
+    } catch (err) {
+      instructionDiv.innerHTML = "❌ Kunde inte starta kameran. Kontrollera åtkomst.";
+      scanning = false;
+    }
+  } else {
+    instructionDiv.innerHTML = "❌ Din enhet stöder inte BarcodeDetector.";
+  }
 });
 </script>
-
 </body>
 </html>
