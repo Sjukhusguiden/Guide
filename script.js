@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 const menuToggle = document.querySelector(".menu-toggle");
 const dropdownMenu = document.getElementById("dropdownMenu");
 
@@ -10,6 +12,8 @@ document.addEventListener("click", (e) => {
     if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
         dropdownMenu.classList.remove("active");
     }
+});
+
 });
 
 
