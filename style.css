@@ -27,63 +27,32 @@ cursor:pointer;
 
 /* MENU */
 
-nav{
-position:absolute;
-top:70px;
-right:25px;
-width:220px;
-background:white;
-border-radius:12px;
-box-shadow:0 10px 25px rgba(0,0,0,0.15);
-display:flex;
-flex-direction:column;
-opacity:0;
-transform:translateY(-10px);
-pointer-events:none;
-transition:0.25s;
-}
-
-nav.active{
-opacity:1;
-transform:translateY(0);
-pointer-events:auto;
-}
-
-nav a{
-padding:14px 18px;
-text-decoration:none;
-color:#005f8f;
-font-weight:500;
-}
-
-nav a:hover{
-background:#f2f8fc;
-}
-/* DROPDOWN MENY */
-nav {
+#dropdownMenu {
     position: absolute;
-    top: 70px;   /* under header */
+    top: 70px;
     right: 25px;
-    width: 180px;  /* smalare, avlång ruta */
+    width: 180px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     display: flex;
     flex-direction: column;
+
     opacity: 0;
     transform: translateY(-10px);
     pointer-events: none;
     transition: 0.25s;
+
     z-index: 1000;
 }
 
-nav.active {
+#dropdownMenu.active {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
 }
 
-nav a {
+#dropdownMenu a {
     padding: 12px 18px;
     text-decoration: none;
     color: #005f8f;
@@ -91,11 +60,11 @@ nav a {
     border-bottom: 1px solid #f0f0f0;
 }
 
-nav a:last-child {
+#dropdownMenu a:last-child {
     border-bottom: none;
 }
 
-nav a:hover {
+#dropdownMenu a:hover {
     background: #f2f8fc;
 }
 
