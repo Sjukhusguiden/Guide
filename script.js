@@ -1,25 +1,22 @@
-// script.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 document.addEventListener("DOMContentLoaded", () => {
 
     // =======================
-    // DROPDOWN MENU
+    // DROPDOWN MENY
     // =======================
     const menuToggle = document.querySelector(".menu-toggle");
     const dropdownMenu = document.getElementById("dropdownMenu");
 
-    menuToggle.addEventListener("click", e => {
+    menuToggle.addEventListener("click", (e) => {
         dropdownMenu.classList.toggle("active");
         e.stopPropagation();
     });
 
-    document.addEventListener("click", e => {
+    document.addEventListener("click", (e) => {
         if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
             dropdownMenu.classList.remove("active");
         }
     });
+
 
     // =======================
     // QR SCANNER
@@ -28,14 +25,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const video = document.getElementById("camera");
     const instructionDiv = document.getElementById("instruction");
 
-    let scanning = false;
     let stream;
+    let scanning = false;
 
     scanBtn.addEventListener("click", async () => {
         instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
 
         if ("BarcodeDetector" in window) {
             const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
@@ -64,25 +62,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }, 1000);
                 return;
             }
-        } catch { }
+        } catch {}
         setTimeout(() => scanLoop(detector), 120);
     }
 
-    // =======================
-    // FIREBASE INIT
-    // =======================
-    const firebaseConfig = {
-        apiKey: "AIzaSyCkHZ9nebsrLQg0ovigpxXi9DcoZWIVEhM",
-        authDomain: "sjukhusguiden.firebaseapp.com",
-        projectId: "sjukhusguiden",
-        storageBucket: "sjukhusguiden.firebasestorage.app",
-        messagingSenderId: "122348406165",
-        appId: "1:122348406165:web:e698bf6d32ac22f339a29c",
-        measurementId: "G-3G6D5DZD7Z"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
 
     // =======================
     // STAR RATING SYSTEM
@@ -90,9 +73,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedRating = 0;
     const stars = document.querySelectorAll(".star");
 
-    stars.forEach(star => {
+    stars.forEach((star, idx) => {
         star.addEventListener("click", () => {
-            selectedRating = Number(star.dataset.value);
+            selectedRating = idx + 1;
             stars.forEach(s => s.classList.remove("selected"));
             for (let i = 0; i < selectedRating; i++) {
                 stars[i].classList.add("selected");
@@ -105,6 +88,41 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedRating = 0;
         stars.forEach(s => s.classList.remove("selected"));
     };
+
+
+    // =======================
+    // RECENSIONER
+    // =======================
+    const submitBtn = document.getElementById("submitReviewBtn");
+    submitBtn.addEventListener("click", submitReview);
+
+    async function submitReview() {
+        const name = document.getElementById("name").value || "Anonym";
+        const text = document.getElementById("reviewText").value.trim();
+        const rating = Number(window.getSelectedRating()) || 0;
+
+        if (!text || rating === 0) {
+            alert("Välj antal stjärnor och skriv en recension.");
+            return;
+        }
+
+        // Spara i Firebase
+        await addDoc(collection(db, "reviews"), {
+            name: name,
+            text: text,
+            rating: rating,
+            date: Date.now()
+        });
+
+        // Rensa formuläret och rating
+        document.getElementById("name").value = "";
+        document.getElementById("reviewText").value = "";
+        window.resetRating();
+
+        // Ladda om recensioner
+        loadReviews();
+    }
+
 
     // =======================
     // LOAD REVIEWS
@@ -122,16 +140,14 @@ document.addEventListener("DOMContentLoaded", () => {
         snapshot.forEach(doc => {
             const data = doc.data();
             const rating = Number(data.rating) || 0;
-            if (rating > 0) {
-                totalRating += rating;
-                ratingCount++;
-            }
+            if (rating > 0) totalRating += rating;
+            if (rating > 0) ratingCount++;
 
             const div = document.createElement("div");
             div.className = "review";
             div.innerHTML = `
                 <b>${data.name}</b>
-                <div class="review-stars">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</div>
+                <div class="review-stars">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
                 <p>${data.text}</p>
             `;
             list.appendChild(div);
@@ -143,30 +159,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadReviews();
 
-    // =======================
-    // SUBMIT REVIEW
-    // =======================
-    window.submitReview = async function () {
-        const name = document.getElementById("name").value || "Anonym";
-        const text = document.getElementById("reviewText").value.trim();
-        const rating = Number(window.getSelectedRating()) || 0;
-
-        if (!text || rating === 0) {
-            alert("Välj antal stjärnor och skriv en recension.");
-            return;
-        }
-
-        await addDoc(collection(db, "reviews"), {
-            name: name,
-            text: text,
-            rating: rating,
-            date: Date.now()
-        });
-
-        document.getElementById("name").value = "";
-        document.getElementById("reviewText").value = "";
-        window.resetRating();
-
-        loadReviews();
-    };
 });
