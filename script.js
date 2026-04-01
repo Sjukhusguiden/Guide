@@ -14,11 +14,6 @@ document.addEventListener("click", (e) => {
 
 
 
-// Event listener
-menuToggle.addEventListener("click", toggleMenu);
-
-
-
 // =======================
 // QR SCANNER
 // =======================
