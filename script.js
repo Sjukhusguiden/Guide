@@ -1,162 +1,171 @@
+// script.js
+// =======================
+// DROPDOWN MENU
+// =======================
 document.addEventListener("DOMContentLoaded", () => {
+  const menuToggle = document.querySelector(".menu-toggle");
+  const dropdownMenu = document.getElementById("dropdownMenu");
 
-    // =======================
-    // DROPDOWN MENY
-    // =======================
-    const menuToggle = document.querySelector(".menu-toggle");
-    const dropdownMenu = document.getElementById("dropdownMenu");
+  menuToggle.addEventListener("click", (e) => {
+    dropdownMenu.classList.toggle("active");
+    e.stopPropagation();
+  });
 
-    menuToggle.addEventListener("click", (e) => {
-        dropdownMenu.classList.toggle("active");
-        e.stopPropagation();
+  document.addEventListener("click", (e) => {
+    if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+      dropdownMenu.classList.remove("active");
+    }
+  });
+
+  // =======================
+  // STAR RATING SYSTEM
+  // =======================
+  const stars = document.querySelectorAll(".star");
+  let selectedRating = 0;
+
+  stars.forEach((star) => {
+    star.addEventListener("click", () => {
+      selectedRating = Number(star.dataset.value);
+      stars.forEach((s) => s.classList.remove("selected"));
+      for (let i = 0; i < selectedRating; i++) {
+        stars[i].classList.add("selected");
+      }
     });
+  });
 
-    document.addEventListener("click", (e) => {
-        if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
-            dropdownMenu.classList.remove("active");
-        }
-    });
+  // Global functions for rating access
+  window.getSelectedRating = () => selectedRating;
+  window.resetRating = () => {
+    selectedRating = 0;
+    stars.forEach((s) => s.classList.remove("selected"));
+  };
 
+  // =======================
+  // REVIEW FORM
+  // =======================
+  const submitBtn = document.getElementById("submitReviewBtn");
 
-    // =======================
-    // QR SCANNER
-    // =======================
-    const scanBtn = document.getElementById("scanBtn");
-    const video = document.getElementById("camera");
-    const instructionDiv = document.getElementById("instruction");
+  submitBtn.addEventListener("click", submitReview);
 
-    let stream;
-    let scanning = false;
+  async function submitReview() {
+    const name = document.getElementById("name").value || "Anonym";
+    const text = document.getElementById("reviewText").value.trim();
+    const rating = window.getSelectedRating();
 
-    scanBtn.addEventListener("click", async () => {
-        instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
-
-        if ("BarcodeDetector" in window) {
-            const detector = new BarcodeDetector({ formats: ["qr_code"] });
-
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                video.style.display = "block";
-                await video.play();
-                scanning = true;
-                scanLoop(detector);
-            } catch {
-                alert("Kunde inte öppna kameran");
-            }
-        } else {
-            alert("Din webbläsare stödjer inte QR-skanning.");
-        }
-    });
-
-    async function scanLoop(detector) {
-        if (!scanning) return;
-        try {
-            const codes = await detector.detect(video);
-            if (codes.length > 0) {
-                scanning = false;
-                instructionDiv.innerHTML = "✅ QR kod skannad";
-                setTimeout(() => {
-                    video.srcObject.getTracks().forEach(t => t.stop());
-                    window.location.href = codes[0].rawValue;
-                }, 1000);
-                return;
-            }
-        } catch {}
-        setTimeout(() => scanLoop(detector), 120);
+    if (!text || rating === 0) {
+      alert("Välj antal stjärnor och skriv en recension.");
+      return;
     }
 
+    try {
+      await addDoc(collection(db, "reviews"), {
+        name: name,
+        text: text,
+        rating: rating,
+        date: Date.now(),
+      });
 
-    // =======================
-    // STAR RATING SYSTEM
-    // =======================
-    let selectedRating = 0;
-    const stars = document.querySelectorAll(".star");
-
-    stars.forEach((star, idx) => {
-        star.addEventListener("click", () => {
-            selectedRating = idx + 1;
-            stars.forEach(s => s.classList.remove("selected"));
-            for (let i = 0; i < selectedRating; i++) {
-                stars[i].classList.add("selected");
-            }
-        });
-    });
-
-    window.getSelectedRating = () => selectedRating;
-    window.resetRating = () => {
-        selectedRating = 0;
-        stars.forEach(s => s.classList.remove("selected"));
-    };
-
-
-    // =======================
-    // RECENSIONER
-    // =======================
-    const submitBtn = document.getElementById("submitReviewBtn");
-    submitBtn.addEventListener("click", submitReview);
-
-    async function submitReview() {
-        const name = document.getElementById("name").value || "Anonym";
-        const text = document.getElementById("reviewText").value.trim();
-        const rating = Number(window.getSelectedRating()) || 0;
-
-        if (!text || rating === 0) {
-            alert("Välj antal stjärnor och skriv en recension.");
-            return;
-        }
-
-        // Spara i Firebase
-        await addDoc(collection(db, "reviews"), {
-            name: name,
-            text: text,
-            rating: rating,
-            date: Date.now()
-        });
-
-        // Rensa formuläret och rating
-        document.getElementById("name").value = "";
-        document.getElementById("reviewText").value = "";
-        window.resetRating();
-
-        // Ladda om recensioner
-        loadReviews();
+      document.getElementById("name").value = "";
+      document.getElementById("reviewText").value = "";
+      window.resetRating();
+      loadReviews();
+    } catch (err) {
+      console.error("Error saving review:", err);
+      alert("Något gick fel, försök igen.");
     }
+  }
 
+  // =======================
+  // LOAD REVIEWS
+  // =======================
+  async function loadReviews() {
+    const list = document.getElementById("reviewsList");
+    list.innerHTML = "";
 
-    // =======================
-    // LOAD REVIEWS
-    // =======================
-    async function loadReviews() {
-        const list = document.getElementById("reviewsList");
-        list.innerHTML = "";
+    try {
+      const q = query(collection(db, "reviews"), orderBy("date", "desc"));
+      const snapshot = await getDocs(q);
 
-        const q = query(collection(db, "reviews"), orderBy("date", "desc"));
-        const snapshot = await getDocs(q);
+      let totalRating = 0;
+      let count = 0;
 
-        let totalRating = 0;
-        let ratingCount = 0;
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const rating = Number(data.rating) || 0;
+        if (rating > 0) totalRating += rating;
+        if (rating > 0) count++;
 
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const rating = Number(data.rating) || 0;
-            if (rating > 0) totalRating += rating;
-            if (rating > 0) ratingCount++;
+        const div = document.createElement("div");
+        div.className = "review";
+        div.innerHTML = `
+          <b>${data.name}</b>
+          <div class="review-stars">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</div>
+          <p>${data.text}</p>
+        `;
+        list.appendChild(div);
+      });
 
-            const div = document.createElement("div");
-            div.className = "review";
-            div.innerHTML = `
-                <b>${data.name}</b>
-                <div class="review-stars">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
-                <p>${data.text}</p>
-            `;
-            list.appendChild(div);
-        });
-
-        const avg = ratingCount ? (totalRating / ratingCount).toFixed(1) : "0";
-        document.getElementById("averageRating").innerHTML = `⭐ ${avg} / 5 (${ratingCount} recensioner)`;
+      const avg = count ? (totalRating / count).toFixed(1) : "0";
+      document.getElementById(
+        "averageRating"
+      ).textContent = `⭐ ${avg} / 5 (${count} recensioner)`;
+    } catch (err) {
+      console.error("Error loading reviews:", err);
     }
+  }
 
-    loadReviews();
+  // Load reviews on page load
+  loadReviews();
 
+  // =======================
+  // QR SCANNER
+  // =======================
+  const scanBtn = document.getElementById("scanBtn");
+  const video = document.getElementById("camera");
+  const instructionDiv = document.getElementById("instruction");
+  let scanning = false;
+  let stream;
+
+  scanBtn.addEventListener("click", async () => {
+    instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
+
+    if ("BarcodeDetector" in window) {
+      const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+        video.srcObject = stream;
+        video.style.display = "block";
+        await video.play();
+
+        scanning = true;
+        scanLoop(detector);
+      } catch {
+        instructionDiv.innerHTML =
+          "❌ Kunde inte starta kameran. Kontrollera åtkomst.";
+      }
+    } else {
+      instructionDiv.innerHTML =
+        "❌ Din enhet stöder inte BarcodeDetector / QR-skanning.";
+    }
+  });
+
+  async function scanLoop(detector) {
+    if (!scanning) return;
+    try {
+      const codes = await detector.detect(video);
+      if (codes.length > 0) {
+        scanning = false;
+        instructionDiv.innerHTML = "✅ QR-kod skannad!";
+        setTimeout(() => {
+          video.srcObject.getTracks().forEach((t) => t.stop());
+          window.location.href = codes[0].rawValue;
+        }, 1000);
+        return;
+      }
+    } catch (err) {}
+    setTimeout(() => scanLoop(detector), 120);
+  }
 });
