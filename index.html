@@ -258,55 +258,136 @@ window.submitReview = submitReview;
 // =======================
 // QR SCANNER
 // =======================
+// Hämta element
 const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("camera");
+const instructionDiv = document.getElementById("instruction");
+
 let scanning = false;
-scanBtn.addEventListener("click", async () => {
-  instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
+let currentStream = null;
 
-  // Show camera and QR box
-  video.style.display = "block";
-  document.getElementById("html5-qrcode").style.display = "block";
+// =========================
+// START SCAN
+// =========================
+scanBtn.addEventListener("click", startScan);
 
-  // Wait for a short delay so elements finish rendering
-  setTimeout(() => {
-    // Scroll to bottom smoothly
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  }, 500); // 500ms delay can be adjusted if needed
+async function startScan() {
 
-  if (scanning) return;
+    if (scanning) return;
 
-  if ("BarcodeDetector" in window) {
-    scanning = true;
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
+    instructionDiv.innerHTML = "📷 Startar kamera...";
+    
+    // =========================
+    // METHOD 1: BarcodeDetector
+    // =========================
+    if ("BarcodeDetector" in window) {
+        try {
+            scanning = true;
+
+            const detector = new BarcodeDetector({
+                formats: ["qr_code"]
+            });
+
+            currentStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment" }
+            });
+
+            video.style.display = "block";
+            video.srcObject = currentStream;
+            await video.play();
+
+            scanLoop(detector);
+
+        } catch (err) {
+            console.log("BarcodeDetector failed:", err);
+            scanning = false;
+            startFallback();
+        }
+
+    } else {
+        // =========================
+        // METHOD 2: FALLBACK
+        // =========================
+        startFallback();
+    }
+}
+
+// =========================
+// SCAN LOOP
+// =========================
+async function scanLoop(detector) {
+
+    if (!scanning) return;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
-      });
-      video.srcObject = stream;
-      await video.play();
-
-      (async function loop() {
-        if (!scanning) return;
         const codes = await detector.detect(video);
-        if (codes.length) {
-          scanning = false;
-          stream.getTracks().forEach(track => track.stop());
-          window.location.href = codes[0].rawValue;
-          return;
+
+        if (codes.length > 0) {
+            onScanSuccess(codes[0].rawValue);
+            return;
         }
-        setTimeout(loop, 150);
-      })();
 
     } catch (err) {
-      instructionDiv.innerHTML = "❌ Kunde inte starta kameran. Kontrollera åtkomst.";
-      scanning = false;
+        console.log("Scan error:", err);
     }
-  } else {
-    instructionDiv.innerHTML = "❌ Din enhet stöder inte BarcodeDetector.";
-  }
-});
+
+    requestAnimationFrame(() => scanLoop(detector));
+}
+
+// =========================
+// FALLBACK (html5-qrcode)
+// =========================
+function startFallback() {
+
+    instructionDiv.innerHTML = "📷 Startar fallback scanner...";
+
+    const html5QrCode = new Html5Qrcode("html5-qrcode");
+
+    Html5Qrcode.getCameras().then(devices => {
+        if (devices.length) {
+
+            html5QrCode.start(
+                devices[0].id,
+                {
+                    fps: 10,
+                    qrbox: 250
+                },
+                (decodedText) => {
+                    html5QrCode.stop();
+                    onScanSuccess(decodedText);
+                }
+            );
+
+        } else {
+            instructionDiv.innerHTML = "❌ Ingen kamera hittades";
+        }
+    }).catch(err => {
+        instructionDiv.innerHTML = "❌ Kamera kunde inte startas";
+        console.log(err);
+    });
+}
+
+// =========================
+// NÄR QR HITTAS
+// =========================
+function onScanSuccess(data) {
+
+    scanning = false;
+
+    instructionDiv.innerHTML = "✅ QR kod hittad!";
+
+    // Stoppa kamera
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+    }
+
+    video.style.display = "none";
+
+    console.log("QR:", data);
+
+    // 👉 Redirect
+    window.location.href = data;
+}
 </script>
 </body>
 </html>
