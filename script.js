@@ -1,20 +1,6 @@
 // script.js
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCkHZ9nebsrLQg0ovigpxXi9DcoZWIVEhM",
-  authDomain: "sjukhusguiden.firebaseapp.com",
-  projectId: "sjukhusguiden",
-  storageBucket: "sjukhusguiden.firebasestorage.app",
-  messagingSenderId: "122348406165",
-  appId: "1:122348406165:web:e698bf6d32ac22f339a29c",
-  measurementId: "G-3G6D5DZD7Z"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 // =======================
 // DROPDOWN MENU
