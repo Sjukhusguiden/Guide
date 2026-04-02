@@ -172,3 +172,4 @@ scanBtn.addEventListener("click", async () => {
     instructionDiv.innerHTML = "❌ Din enhet stöder inte BarcodeDetector.";
   }
 });
+});
