@@ -89,6 +89,22 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
+    /* =======================
+   FIREBASE CONFIG
+======================= */
+// Ersätt med din egen Firebase-konfiguration
+const firebaseConfig = {
+  apiKey: "DIN_API_KEY",
+  authDomain: "DITT_PROJECT_ID.firebaseapp.com",
+  projectId: "DITT_PROJECT_ID",
+  storageBucket: "DITT_PROJECT_ID.appspot.com",
+  messagingSenderId: "DIN_SENDER_ID",
+  appId: "DIN_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
     // QR-scanner
     const scanBtn = document.getElementById("scanBtn");
     const instructionDiv = document.getElementById("instruction");
@@ -149,7 +165,42 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         const menu = document.getElementById("dropdownMenu");
         menu.classList.toggle("show");
     }
-</script>
+    /* =======================
+   FIRESTORE REVIEWS
+======================= */
+const sendReviewBtn = document.getElementById("sendReviewBtn");
+const reviewListDiv = document.getElementById("reviewList");
 
+sendReviewBtn.addEventListener("click", () => {
+    const name = document.getElementById("name").value || "Anonym";
+    const text = document.getElementById("reviewText").value;
+
+    if (!text) return alert("Skriv en recension först!");
+
+    db.collection("reviews").add({
+        name: name,
+        text: text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        document.getElementById("name").value = "";
+        document.getElementById("reviewText").value = "";
+        alert("Recension skickad!");
+    }).catch(err => {
+        console.error("Fel vid sparande:", err);
+    });
+});
+
+// Visa reviews i realtid
+db.collection("reviews").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+    reviewListDiv.innerHTML = "";
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "review-card";
+        div.innerHTML = `<strong>${data.name}</strong>: <p>${data.text}</p>`;
+        reviewListDiv.appendChild(div);
+    });
+});
+</script>
 </body>
 </html>
