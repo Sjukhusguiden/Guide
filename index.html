@@ -14,32 +14,30 @@
 
 <!-- Html5 QR Code -->
 <script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+/* Enkel styling för stjärnor */
+.star-rating {
+    display: flex;
+    gap: 5px;
+    cursor: pointer;
+}
+.star-rating i {
+    font-size: 1.5rem;
+    color: #ccc;
+}
+.star-rating i.selected {
+    color: gold;
+}
+.review-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
+</style>
 </head>
 <body>
-
-<header>
-    <div class="logo">
-        <i class="fa-solid fa-hospital"></i> Sjukhusguiden
-    </div>
-    <div class="menu-toggle" onclick="toggleMenu()">
-        <i class="fa-solid fa-bars"></i>
-    </div>
-</header>
-
-<nav id="dropdownMenu">
-    <a href="#about"><i class="fa-solid fa-circle-info"></i> Om tjänsten</a>
-    <a href="#how"><i class="fa-solid fa-map"></i> Hur det fungerar</a>
-    <a href="#reviews"><i class="fa-solid fa-comment"></i> Recensioner</a>
-    <a href="https://www.1177.se/" target="_blank"><i class="fa-solid fa-house"></i> 1177 Startsida</a>
-    <a href="https://www.1177.se/e-tjanster/" target="_blank"><i class="fa-solid fa-comments"></i> 1177 Online-chatt</a>
-    <a href="tel:1177"><i class="fa-solid fa-phone"></i> Ring 1177</a>
-</nav>
-
-<section class="hero" id="about">
-    <i class="fa-solid fa-hospital hero-icon"></i>
-    <h1>Välkommen till Sjukhusguiden</h1>
-    <p>Sjukhusguiden är ett digitalt verktyg som hjälper dig att hitta rätt mottagning och rum på ett enkelt sätt.</p>
-</section>
 
 <section class="scanner-section">
     <h2><i class="fa-solid fa-qrcode"></i> QR-kod Scanner</h2>
@@ -48,41 +46,27 @@
     <div id="html5-qrcode"></div>
 </section>
 
-<section id="how" class="steps">
-    <h2><i class="fa-solid fa-route"></i> Hur man gör</h2>
-    <div class="step-card">
-        <h3>Steg 1</h3>
-        <p>Skanna QR-koden med din kamera och välj mottagning.</p>
-    </div>
-    <div class="step-card">
-        <h3>Steg 2</h3>
-        <p>Följ väginstruktionerna och skanna nästa QR-kod direkt i hemsidan tills du kommer fram.</p>
-    </div>
-    <div class="step-card">
-        <h3>Steg 3</h3>
-        <p>Om alla steg följts på rätt sätt borde du nu vara framme. Lämna gärna en recension när du är klar.</p>
-    </div>
-</section>
-
 <section id="reviews" class="reviews">
     <h2><i class="fa-solid fa-star"></i> Recensioner</h2>
     <input id="name" placeholder="Ditt namn">
     <textarea id="reviewText" placeholder="Skriv din recension"></textarea>
+
+    <div class="star-rating" id="starRating">
+        <i class="fa-regular fa-star" data-value="1"></i>
+        <i class="fa-regular fa-star" data-value="2"></i>
+        <i class="fa-regular fa-star" data-value="3"></i>
+        <i class="fa-regular fa-star" data-value="4"></i>
+        <i class="fa-regular fa-star" data-value="5"></i>
+    </div>
+
     <button id="sendReviewBtn">Skicka recension</button>
     <div id="reviewList"></div>
 </section>
 
-<footer>
-    <p><i class="fa-solid fa-hospital"></i> © 2026 Sjukhusguiden</p>
-</footer>
-
 <script>
-/* ===========================
-   FIREBASE CONFIG
-=========================== */
-// Byt ut med din egen konfiguration från Firebase Console
+/* ===== FIREBASE CONFIG ===== */
 const firebaseConfig = {
- apiKey: "AIzaSyCkHZ9nebsrLQg0ovigpxXi9DcoZWIVEhM",
+  apiKey: "AIzaSyCkHZ9nebsrLQg0ovigpxXi9DcoZWIVEhM",
   authDomain: "sjukhusguiden.firebaseapp.com",
   projectId: "sjukhusguiden",
   storageBucket: "sjukhusguiden.firebasestorage.app",
@@ -93,9 +77,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ===========================
-   QR-SCANNER
-=========================== */
+/* ===== QR-SCANNER ===== */
 const scanBtn = document.getElementById("scanBtn");
 const instructionDiv = document.getElementById("instruction");
 let scanner;
@@ -113,7 +95,7 @@ scanBtn.addEventListener("click", () => {
             const cameraId = cameras[0].id;
             scanner.start(cameraId, { fps: 10, qrbox: 250 },
                 qrCodeMessage => {
-                    lastQR = qrCodeMessage; // Spara QR-kod
+                    lastQR = qrCodeMessage; 
                     instructionDiv.innerHTML = `<strong>QR-kod:</strong> ${qrCodeMessage}`;
                     scanner.stop();
                 },
@@ -129,9 +111,24 @@ scanBtn.addEventListener("click", () => {
     });
 });
 
-/* ===========================
-   FIRESTORE REVIEWS
-=========================== */
+/* ===== STAR RATING ===== */
+const starRating = document.getElementById("starRating");
+let selectedStars = 0;
+
+starRating.querySelectorAll("i").forEach(star => {
+    star.addEventListener("click", () => {
+        selectedStars = parseInt(star.dataset.value);
+        updateStars(selectedStars);
+    });
+});
+
+function updateStars(count) {
+    starRating.querySelectorAll("i").forEach(star => {
+        star.classList.toggle("selected", parseInt(star.dataset.value) <= count);
+    });
+}
+
+/* ===== FIRESTORE REVIEWS ===== */
 const sendReviewBtn = document.getElementById("sendReviewBtn");
 const reviewListDiv = document.getElementById("reviewList");
 
@@ -140,15 +137,19 @@ sendReviewBtn.addEventListener("click", () => {
     const text = document.getElementById("reviewText").value;
 
     if (!text) return alert("Skriv en recension först!");
+    if (selectedStars === 0) return alert("Välj ett betyg med stjärnor!");
 
     db.collection("reviews").add({
         name: name,
         text: text,
-        qrCode: lastQR || null, // sparar vilken QR som skannades
+        stars: selectedStars,
+        qrCode: lastQR || null,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
         document.getElementById("name").value = "";
         document.getElementById("reviewText").value = "";
+        selectedStars = 0;
+        updateStars(0);
         alert("Recension skickad!");
     }).catch(err => {
         console.error("Fel vid sparande:", err);
@@ -160,16 +161,15 @@ db.collection("reviews").orderBy("timestamp", "desc").onSnapshot(snapshot => {
     reviewListDiv.innerHTML = "";
     snapshot.forEach(doc => {
         const data = doc.data();
+        const starsHtml = "★".repeat(data.stars) + "☆".repeat(5 - data.stars);
         const div = document.createElement("div");
         div.className = "review-card";
-        div.innerHTML = `<strong>${data.name}</strong> (${data.qrCode || "Ingen QR"}): <p>${data.text}</p>`;
+        div.innerHTML = `<strong>${data.name}</strong> (${data.qrCode || "Ingen QR"}): <p>${starsHtml}</p><p>${data.text}</p>`;
         reviewListDiv.appendChild(div);
     });
 });
 
-/* ===========================
-   DROPDOWN MENU
-=========================== */
+/* ===== DROPDOWN MENU ===== */
 function toggleMenu() {
     const menu = document.getElementById("dropdownMenu");
     menu.classList.toggle("show");
