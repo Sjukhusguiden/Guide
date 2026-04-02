@@ -123,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // =======================
 // QR SCANNER
 // =======================
-  const instructionDiv = document.getElementById("instruction");
 const scanBtn = document.getElementById("scanBtn");
 const video = document.getElementById("camera");
 let scanning = false;
