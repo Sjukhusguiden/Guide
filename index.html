@@ -1,396 +1,155 @@
 <!DOCTYPE html>
 <html lang="sv">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Sjukhusguiden – Vägledning på Sundsvalls sjukhus</title>
+<title>Sjukhusguiden</title>
 
-<meta name="description" content="Sjukhusguiden hjälper dig att hitta rätt mottagning och rum på Sundsvalls sjukhus med QR-koder och tydliga väginstruktioner.">
-<meta name="keywords" content="Sundsvalls sjukhus vägledning, hitta mottagning Sundsvall, sjukhus guide Sundsvall, hospital directions Sundsvall">
-<meta name="author" content="Sjukhusguiden">
-<link rel="canonical" href="https://sjukhusguiden.github.io/Guide/">
-
-<meta property="og:title" content="Sjukhusguiden – Hitta rätt på Sundsvalls sjukhus">
-<meta property="og:description" content="Skanna QR-koder och få vägbeskrivningar till rätt mottagning på Sundsvalls sjukhus.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://sjukhusguiden.github.io/Guide/">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<script src="https://unpkg.com/html5-qrcode"></script>
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "Sjukhusguiden",
-  "url": "https://sjukhusguiden.github.io/Guide/",
-  "description": "Digital vägledning för att hitta mottagningar och rum på Sundsvalls sjukhus med QR-koder.",
-  "inLanguage": "sv",
-  "about": {
-    "@type": "Hospital",
-    "name": "Sundsvalls sjukhus"
-  }
-}
-</script>
-
 </head>
-<script src="script.js"></script>
+
 <body>
 
-<!-- Hidden SEO text -->
-<div style="position:absolute;left:-9999px;">
-Vägledning Sundsvalls sjukhus.
-Hitta rätt mottagning på Sundsvalls sjukhus.
-Digital sjukhusguide för patienter och besökare.
-QR-kod vägvisning inne på sjukhus.
-Sjukhus karta Sundsvall.
-Hitta avdelning Sundsvalls sjukhus.
-</div>
-
 <header>
-<div class="logo">
-<i class="fa-solid fa-hospital"></i> Sjukhusguiden
-</div>
+    <div class="logo">
+        <i class="fa-solid fa-hospital"></i>
+        Sjukhusguiden
+    </div>
 
-<!-- FIX: lade till ID -->
-<div class="menu-toggle" id="menuToggle">
-    <i class="fa-solid fa-bars"></i>
-</div>
+    <div class="menu-toggle" onclick="toggleMenu()">
+        <i class="fa-solid fa-bars"></i>
+    </div>
 </header>
 
-<!-- SAMMA MENY (oförändrad) -->
 <nav id="dropdownMenu">
-<a href="#about"><i class="fa-solid fa-circle-info"></i> Om tjänsten</a>
-<a href="#how"><i class="fa-solid fa-map"></i> Hur det fungerar</a>
-<a href="#reviews"><i class="fa-solid fa-comment"></i> Recensioner</a>
-<a href="https://www.1177.se/" target="_blank"><i class="fa-solid fa-house"></i> 1177 Startsida</a>
-<a href="https://www.1177.se/e-tjanster/" target="_blank"><i class="fa-solid fa-comments"></i> 1177 Online-chatt</a>
-<a href="tel:1177"><i class="fa-solid fa-phone"></i> Ring 1177</a>
+    <a href="#about"><i class="fa-solid fa-circle-info"></i> Om tjänsten</a>
+    <a href="#how"><i class="fa-solid fa-map"></i> Hur det fungerar</a>
+    <a href="#reviews"><i class="fa-solid fa-comment"></i> Recensioner</a>
+    <a href="https://www.1177.se/" target="_blank"><i class="fa-solid fa-house"></i> 1177 Startsida</a>
+    <a href="https://www.1177.se/e-tjanster/" target="_blank"><i class="fa-solid fa-comments"></i> 1177 Online-chatt</a>
+    <a href="tel:1177"><i class="fa-solid fa-phone"></i> Ring 1177</a>
 </nav>
 
 <section class="hero" id="about">
-<i class="fa-solid fa-hospital hero-icon"></i>
-<h1>Välkommen till Sjukhusguiden</h1>
-<p>Sjukhusguiden är ett digitalt verktyg som ska hjälpa dig att hitta till rätt mottagning och rum på ett simpelt och enkelt sätt.</p>
+    <i class="fa-solid fa-hospital hero-icon"></i>
+    <h1>Välkommen till Sjukhusguiden</h1>
+    <p>Sjukhusguiden är ett digitalt verktyg som ska hjälpa dig
+    att hitta till rätt mottagning och rum på ett simpelt och enkelt sätt.</p>
 </section>
 
 <section class="scanner-section">
     <h2><i class="fa-solid fa-qrcode"></i> QR-kod Scanner</h2>
+
     <button id="scanBtn" class="primary-btn">
         <i class="fa-solid fa-camera"></i> Starta scanning
     </button>
+
     <div id="instruction"></div>
-    <!-- ✅ DENNA SAKNADES -->
-    <video id="camera" playsinline></video>
     <div id="html5-qrcode"></div>
+    <div id="debug"></div>
 </section>
 
 <section id="how" class="steps">
-<h2><i class="fa-solid fa-route"></i> Hur man gör</h2>
-<div class="step-card"><h3>Steg 1</h3><p>Skanna QR-koden med din kamera och välj mottagning.</p></div>
-<div class="step-card"><h3>Steg 2</h3><p>Följ väginstruktionerna och skanna nästa QR-kod direkt i hemsidan tills du kommer fram.</p></div>
-<div class="step-card"><h3>Steg 3</h3><p>Om alla steg följts på rätt sätt borde du nu vara framme. Lämna gärna en recension när du är klar.</p></div>
+    <h2><i class="fa-solid fa-route"></i> Hur man gör</h2>
+
+    <div class="step-card">
+        <h3>Steg 1</h3>
+        <p>Skanna QR-koden med din kamera och välj mottagning.</p>
+    </div>
+
+    <div class="step-card">
+        <h3>Steg 2</h3>
+        <p>Följ väginstruktionerna och skanna nästa QR-kod direkt i hemsidan tills du kommer fram.</p>
+    </div>
+
+    <div class="step-card">
+        <h3>Steg 3</h3>
+        <p>Om alla steg följts på rätt sätt borde du nu vara framme. Lämna gärna en recension när du är klar.</p>
+    </div>
 </section>
 
 <section id="reviews" class="reviews">
-<h2><i class="fa-solid fa-star"></i> Recensioner</h2>
-<p>Här kan du skriva en recension om hur bra vägvisningen fungerade.</p>
+    <h2><i class="fa-solid fa-star"></i> Recensioner</h2>
 
-<div class="review-form">
-
-<div class="star-rating" id="starRating">
-<span class="star" data-value="1">★</span>
-<span class="star" data-value="2">★</span>
-<span class="star" data-value="3">★</span>
-<span class="star" data-value="4">★</span>
-<span class="star" data-value="5">★</span>
-</div>
-
-<input id="name" placeholder="Ditt namn (valfritt)">
-
-<textarea id="reviewText" placeholder="Skriv din recension..."></textarea>
-<button id="submitReviewBtn">Skicka recension</button>
-
-
-</div>
-
-<h3 id="averageRating">⭐ 0 / 5</h3>
-
-<div id="reviewsList"></div>
+    <input id="name" placeholder="Ditt namn">
+    <textarea id="reviewText" placeholder="Skriv din recension"></textarea>
+    <button onclick="addReview()">Skicka recension</button>
+    <div id="reviewList"></div>
 </section>
 
 <footer>
-<p><i class="fa-solid fa-hospital"></i> © 2026 Sjukhusguiden</p>
+    <p><i class="fa-solid fa-hospital"></i> © 2026 Sjukhusguiden</p>
 </footer>
 
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCkHZ9nebsrLQg0ovigpxXi9DcoZWIVEhM",
-  authDomain: "sjukhusguiden.firebaseapp.com",
-  projectId: "sjukhusguiden",
-  storageBucket: "sjukhusguiden.firebasestorage.app",
-  messagingSenderId: "122348406165",
-  appId: "1:122348406165:web:e698bf6d32ac22f339a29c",
-  measurementId: "G-3G6D5DZD7Z"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let selectedRating = 0;
-
-
-
-// ⭐ STAR CLICK SYSTEM
-
-const stars = document.querySelectorAll(".star");
-
-stars.forEach(star => {
-
-star.addEventListener("click", () => {
-
-selectedRating = star.dataset.value;
-
-stars.forEach(s => s.classList.remove("selected"));
-
-for(let i=0;i<selectedRating;i++){
-stars[i].classList.add("selected");
-}
-
-});
-
-});
-
-
-
-// ⭐ SUBMIT REVIEW
-
-async function submitReview(){
-
-const name = document.getElementById("name").value || "Anonym";
-const text = document.getElementById("reviewText").value;
-
-if(text.trim()==="" || selectedRating==0){
-alert("Välj antal stjärnor och skriv en recension.");
-return;
-}
-
-await addDoc(collection(db,"reviews"),{
-
-name:name,
-text:text,
-rating:Number(selectedRating),
-date:Date.now()
-
-});
-
-document.getElementById("reviewText").value="";
-document.getElementById("name").value="";
-
-selectedRating=0;
-stars.forEach(s => s.classList.remove("selected"));
-
-loadReviews();
-
-}
-
-
-
-// ⭐ LOAD REVIEWS
-
-async function loadReviews(){
-
-const list = document.getElementById("reviewsList");
-
-list.innerHTML="";
-
-const q = query(collection(db,"reviews"),orderBy("date","desc"));
-
-const snapshot = await getDocs(q);
-
-let totalRating = 0;
-let count = 0;
-
-snapshot.forEach(doc=>{
-
-const data = doc.data();
-
-totalRating += data.rating;
-count++;
-
-const div = document.createElement("div");
-
-div.className="review";
-
-div.innerHTML = 
-<b>${data.name}</b>
-<div style="color:#f5b301;font-size:18px;">
-${"★".repeat(data.rating)}${"☆".repeat(5-data.rating)}
-</div>
-<p>${data.text}</p>
-;
-
-list.appendChild(div);
-
-});
-
-const avg = count ? (totalRating/count).toFixed(1) : 0;
-
-document.getElementById("averageRating").innerHTML =
-⭐ ${avg} / 5 (${count} recensioner);
-
-}
-
-
-
-loadReviews();
-
-window.submitReview = submitReview;
-
-
-
-// =======================
-// QR SCANNER
-// =======================
-// Hämta element
-const scanBtn = document.getElementById("scanBtn");
-const video = document.getElementById("camera");
-const instructionDiv = document.getElementById("instruction");
-
-let scanning = false;
-let currentStream = null;
-
-// =========================
-// START SCAN
-// =========================
-scanBtn.addEventListener("click", startScan);
-
-async function startScan() {
-
-    if (scanning) return;
-
-    instructionDiv.innerHTML = "📷 Startar kamera...";
-    
-    // =========================
-    // METHOD 1: BarcodeDetector
-    // =========================
-    if ("BarcodeDetector" in window) {
-        try {
-            scanning = true;
-
-            const detector = new BarcodeDetector({
-                formats: ["qr_code"]
-            });
-
-            currentStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment" }
-            });
-
-            video.style.display = "block";
-            video.srcObject = currentStream;
-            await video.play();
-
-            scanLoop(detector);
-
-        } catch (err) {
-            console.log("BarcodeDetector failed:", err);
-            scanning = false;
-            startFallback();
+<!-- Html5 QR Code library -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+    // QR-scanner
+    const scanBtn = document.getElementById("scanBtn");
+    const instructionDiv = document.getElementById("instruction");
+    let scanner;
+
+    scanBtn.addEventListener("click", () => {
+        instructionDiv.textContent = "Tillåt åtkomst till kameran och rikta mot QR-koden";
+
+        if (scanner) {
+            scanner.clear().then(() => scanner = null);
         }
 
-    } else {
-        // =========================
-        // METHOD 2: FALLBACK
-        // =========================
-        startFallback();
-    }
-}
+        scanner = new Html5Qrcode("html5-qrcode");
 
-// =========================
-// SCAN LOOP
-// =========================
-async function scanLoop(detector) {
-
-    if (!scanning) return;
-
-    try {
-        const codes = await detector.detect(video);
-
-        if (codes.length > 0) {
-            onScanSuccess(codes[0].rawValue);
-            return;
-        }
-
-    } catch (err) {
-        console.log("Scan error:", err);
-    }
-
-    requestAnimationFrame(() => scanLoop(detector));
-}
-
-// =========================
-// FALLBACK (html5-qrcode)
-// =========================
-function startFallback() {
-
-    instructionDiv.innerHTML = "📷 Startar fallback scanner...";
-
-    const html5QrCode = new Html5Qrcode("html5-qrcode");
-
-    Html5Qrcode.getCameras().then(devices => {
-        if (devices.length) {
-
-            html5QrCode.start(
-                devices[0].id,
-                {
-                    fps: 10,
-                    qrbox: 250
-                },
-                (decodedText) => {
-                    html5QrCode.stop();
-                    onScanSuccess(decodedText);
-                }
-            );
-
-        } else {
-            instructionDiv.innerHTML = "❌ Ingen kamera hittades";
-        }
-    }).catch(err => {
-        instructionDiv.innerHTML = "❌ Kamera kunde inte startas";
-        console.log(err);
+        Html5Qrcode.getCameras().then(cameras => {
+            if (cameras && cameras.length) {
+                const cameraId = cameras[0].id;
+                scanner.start(
+                    cameraId,
+                    { fps: 10, qrbox: 250 },
+                    qrCodeMessage => {
+                        instructionDiv.innerHTML = `<strong>QR-kod:</strong> ${qrCodeMessage}`;
+                        scanner.stop();
+                    },
+                    errorMessage => {
+                        console.log("QR scan error:", errorMessage);
+                    }
+                ).catch(err => {
+                    instructionDiv.textContent = "Kunde inte starta kameran: " + err;
+                });
+            } else {
+                instructionDiv.textContent = "Ingen kamera hittades";
+            }
+        }).catch(err => {
+            instructionDiv.textContent = "Kunde inte hämta kameror: " + err;
+        });
     });
-}
 
-// =========================
-// NÄR QR HITTAS
-// =========================
-function onScanSuccess(data) {
+    // Recensioner
+    function addReview() {
+        const name = document.getElementById("name").value || "Anonym";
+        const reviewText = document.getElementById("reviewText").value;
 
-    scanning = false;
+        if (!reviewText) return alert("Skriv en recension först!");
 
-    instructionDiv.innerHTML = "✅ QR kod hittad!";
+        const reviewList = document.getElementById("reviewList");
+        const div = document.createElement("div");
+        div.className = "review-card";
+        div.innerHTML = `<strong>${name}</strong>: <p>${reviewText}</p>`;
+        reviewList.prepend(div);
 
-    // Stoppa kamera
-    if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
+        document.getElementById("name").value = "";
+        document.getElementById("reviewText").value = "";
     }
 
-    video.style.display = "none";
-
-    console.log("QR:", data);
-
-    // 👉 Redirect
-    window.location.href = data;
-}
+    // Dropdown-meny
+    function toggleMenu() {
+        const menu = document.getElementById("dropdownMenu");
+        menu.classList.toggle("show");
+    }
 </script>
+
 </body>
 </html>
