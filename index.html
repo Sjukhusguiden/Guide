@@ -3,23 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Sjukhusguiden</title>
 
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- Html5 QR Code -->
+<script src="https://unpkg.com/html5-qrcode"></script>
 </head>
-
 <body>
 
 <header>
     <div class="logo">
-        <i class="fa-solid fa-hospital"></i>
-        Sjukhusguiden
+        <i class="fa-solid fa-hospital"></i> Sjukhusguiden
     </div>
-
     <div class="menu-toggle" onclick="toggleMenu()">
         <i class="fa-solid fa-bars"></i>
     </div>
@@ -37,35 +38,26 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <section class="hero" id="about">
     <i class="fa-solid fa-hospital hero-icon"></i>
     <h1>Välkommen till Sjukhusguiden</h1>
-    <p>Sjukhusguiden är ett digitalt verktyg som ska hjälpa dig
-    att hitta till rätt mottagning och rum på ett simpelt och enkelt sätt.</p>
+    <p>Sjukhusguiden är ett digitalt verktyg som hjälper dig att hitta rätt mottagning och rum på ett enkelt sätt.</p>
 </section>
 
 <section class="scanner-section">
     <h2><i class="fa-solid fa-qrcode"></i> QR-kod Scanner</h2>
-
-    <button id="scanBtn" class="primary-btn">
-        <i class="fa-solid fa-camera"></i> Starta scanning
-    </button>
-
+    <button id="scanBtn" class="primary-btn"><i class="fa-solid fa-camera"></i> Starta scanning</button>
     <div id="instruction"></div>
     <div id="html5-qrcode"></div>
-    <div id="debug"></div>
 </section>
 
 <section id="how" class="steps">
     <h2><i class="fa-solid fa-route"></i> Hur man gör</h2>
-
     <div class="step-card">
         <h3>Steg 1</h3>
         <p>Skanna QR-koden med din kamera och välj mottagning.</p>
     </div>
-
     <div class="step-card">
         <h3>Steg 2</h3>
         <p>Följ väginstruktionerna och skanna nästa QR-kod direkt i hemsidan tills du kommer fram.</p>
     </div>
-
     <div class="step-card">
         <h3>Steg 3</h3>
         <p>Om alla steg följts på rätt sätt borde du nu vara framme. Lämna gärna en recension när du är klar.</p>
@@ -74,10 +66,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <section id="reviews" class="reviews">
     <h2><i class="fa-solid fa-star"></i> Recensioner</h2>
-
     <input id="name" placeholder="Ditt namn">
     <textarea id="reviewText" placeholder="Skriv din recension"></textarea>
-    <button onclick="addReview()">Skicka recension</button>
+    <button id="sendReviewBtn">Skicka recension</button>
     <div id="reviewList"></div>
 </section>
 
@@ -85,14 +76,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     <p><i class="fa-solid fa-hospital"></i> © 2026 Sjukhusguiden</p>
 </footer>
 
-<!-- Html5 QR Code library -->
-<script src="https://unpkg.com/html5-qrcode"></script>
-
 <script>
-    /* =======================
+/* ===========================
    FIREBASE CONFIG
-======================= */
-// Ersätt med din egen Firebase-konfiguration
+=========================== */
+// Byt ut med din egen konfiguration från Firebase Console
 const firebaseConfig = {
   apiKey: "DIN_API_KEY",
   authDomain: "DITT_PROJECT_ID.firebaseapp.com",
@@ -101,73 +89,48 @@ const firebaseConfig = {
   messagingSenderId: "DIN_SENDER_ID",
   appId: "DIN_APP_ID"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-    // QR-scanner
-    const scanBtn = document.getElementById("scanBtn");
-    const instructionDiv = document.getElementById("instruction");
-    let scanner;
+/* ===========================
+   QR-SCANNER
+=========================== */
+const scanBtn = document.getElementById("scanBtn");
+const instructionDiv = document.getElementById("instruction");
+let scanner;
+let lastQR = null;
 
-    scanBtn.addEventListener("click", () => {
-        instructionDiv.textContent = "Tillåt åtkomst till kameran och rikta mot QR-koden";
+scanBtn.addEventListener("click", () => {
+    instructionDiv.textContent = "Tillåt åtkomst till kameran och rikta mot QR-koden";
 
-        if (scanner) {
-            scanner.clear().then(() => scanner = null);
+    if (scanner) scanner.clear().then(() => scanner = null);
+
+    scanner = new Html5Qrcode("html5-qrcode");
+
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+            const cameraId = cameras[0].id;
+            scanner.start(cameraId, { fps: 10, qrbox: 250 },
+                qrCodeMessage => {
+                    lastQR = qrCodeMessage; // Spara QR-kod
+                    instructionDiv.innerHTML = `<strong>QR-kod:</strong> ${qrCodeMessage}`;
+                    scanner.stop();
+                },
+                errorMessage => { console.log("QR scan error:", errorMessage); }
+            ).catch(err => {
+                instructionDiv.textContent = "Kunde inte starta kameran: " + err;
+            });
+        } else {
+            instructionDiv.textContent = "Ingen kamera hittades";
         }
-
-        scanner = new Html5Qrcode("html5-qrcode");
-
-        Html5Qrcode.getCameras().then(cameras => {
-            if (cameras && cameras.length) {
-                const cameraId = cameras[0].id;
-                scanner.start(
-                    cameraId,
-                    { fps: 10, qrbox: 250 },
-                    qrCodeMessage => {
-                        instructionDiv.innerHTML = `<strong>QR-kod:</strong> ${qrCodeMessage}`;
-                        scanner.stop();
-                    },
-                    errorMessage => {
-                        console.log("QR scan error:", errorMessage);
-                    }
-                ).catch(err => {
-                    instructionDiv.textContent = "Kunde inte starta kameran: " + err;
-                });
-            } else {
-                instructionDiv.textContent = "Ingen kamera hittades";
-            }
-        }).catch(err => {
-            instructionDiv.textContent = "Kunde inte hämta kameror: " + err;
-        });
+    }).catch(err => {
+        instructionDiv.textContent = "Kunde inte hämta kameror: " + err;
     });
+});
 
-    // Recensioner
-    function addReview() {
-        const name = document.getElementById("name").value || "Anonym";
-        const reviewText = document.getElementById("reviewText").value;
-
-        if (!reviewText) return alert("Skriv en recension först!");
-
-        const reviewList = document.getElementById("reviewList");
-        const div = document.createElement("div");
-        div.className = "review-card";
-        div.innerHTML = `<strong>${name}</strong>: <p>${reviewText}</p>`;
-        reviewList.prepend(div);
-
-        document.getElementById("name").value = "";
-        document.getElementById("reviewText").value = "";
-    }
-
-    // Dropdown-meny
-    function toggleMenu() {
-        const menu = document.getElementById("dropdownMenu");
-        menu.classList.toggle("show");
-    }
-    /* =======================
+/* ===========================
    FIRESTORE REVIEWS
-======================= */
+=========================== */
 const sendReviewBtn = document.getElementById("sendReviewBtn");
 const reviewListDiv = document.getElementById("reviewList");
 
@@ -180,6 +143,7 @@ sendReviewBtn.addEventListener("click", () => {
     db.collection("reviews").add({
         name: name,
         text: text,
+        qrCode: lastQR || null, // sparar vilken QR som skannades
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
         document.getElementById("name").value = "";
@@ -197,10 +161,19 @@ db.collection("reviews").orderBy("timestamp", "desc").onSnapshot(snapshot => {
         const data = doc.data();
         const div = document.createElement("div");
         div.className = "review-card";
-        div.innerHTML = `<strong>${data.name}</strong>: <p>${data.text}</p>`;
+        div.innerHTML = `<strong>${data.name}</strong> (${data.qrCode || "Ingen QR"}): <p>${data.text}</p>`;
         reviewListDiv.appendChild(div);
     });
 });
+
+/* ===========================
+   DROPDOWN MENU
+=========================== */
+function toggleMenu() {
+    const menu = document.getElementById("dropdownMenu");
+    menu.classList.toggle("show");
+}
 </script>
+
 </body>
 </html>
