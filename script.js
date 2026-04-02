@@ -1,24 +1,24 @@
 // script.js
 
-
-
-// =======================
-// DROPDOWN MENU
-// =======================
 document.addEventListener("DOMContentLoaded", () => {
+  // =======================
+  // DROPDOWN MENU
+  // =======================
   const menuToggle = document.querySelector(".menu-toggle");
   const dropdownMenu = document.getElementById("dropdownMenu");
 
-  menuToggle.addEventListener("click", (e) => {
-    dropdownMenu.classList.toggle("active");
-    e.stopPropagation();
-  });
+  if (menuToggle && dropdownMenu) {
+    menuToggle.addEventListener("click", (e) => {
+      dropdownMenu.classList.toggle("active");
+      e.stopPropagation();
+    });
 
-  document.addEventListener("click", (e) => {
-    if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
-      dropdownMenu.classList.remove("active");
-    }
-  });
+    document.addEventListener("click", (e) => {
+      if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+        dropdownMenu.classList.remove("active");
+      }
+    });
+  }
 
   // =======================
   // STAR RATING SYSTEM
@@ -36,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Global functions for rating access
   window.getSelectedRating = () => selectedRating;
   window.resetRating = () => {
     selectedRating = 0;
@@ -44,132 +43,134 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // =======================
-  // REVIEW FORM
+  // ROUTES & INSTRUCTIONS
   // =======================
-  const submitBtn = document.getElementById("submitReviewBtn");
+  const routes = {
+    entréA: {
+      T4: {
+        1: "🩻 T4: Ta trappan up 2 våningar",
+        2: "🩻 T4: Gå rakt fram till trappan längst bort i korridoren",
+        3: "🩻 T4: Ta rampen up till närmaste ingång till vänster",
+        4: "🩻 T4: Du är nu framme i korridoren med T4 klassrummen"
+      },
+      akuten: {
+        1: "🚑 Akuten: Gå rakt fram från entré A",
+        2: "🚑 Akuten: Sväng höger",
+        3: "🚑 Akuten: Följ röda linjen",
+        4: "🚑 Akuten: Du är framme"
+      }
+    },
+    entréB: {
+      C303: {
+        1: "🧪 C303: Gå till B205-227 korridoren och sväng höger",
+        2: "🧪 C303: Gå till slutet av korridoren",
+        3: "🧪 C303: Ta trappan upp till kopiatorn",
+        4: "🧪 C303: Gå fram till tredje dörren i korridoren, på den står det C303",
+        5: "🧪 C303: Du är nu framme"
+      }
+    }
+  };
 
-  submitBtn.addEventListener("click", submitReview);
+  const params = new URLSearchParams(window.location.search);
+  let step = parseInt(params.get("step") || "1");
 
-  async function submitReview() {
-    const name = document.getElementById("name").value || "Anonym";
-    const text = document.getElementById("reviewText").value.trim();
-    const rating = window.getSelectedRating();
+  if (params.get("route")) localStorage.setItem("route", params.get("route"));
+  if (params.get("dest")) localStorage.setItem("dest", params.get("dest"));
 
-    if (!text || rating === 0) {
-      alert("Välj antal stjärnor och skriv en recension.");
+  const route = localStorage.getItem("route");
+  const dest = localStorage.getItem("dest");
+
+  const instructionDiv = document.getElementById("instruction");
+  const debugDiv = document.getElementById("debug");
+
+  function showInstruction() {
+    if (!route || !dest) {
+      instructionDiv.textContent = "📍 Skanna en start-QR-kod i receptionen";
       return;
     }
 
-    try {
-      await addDoc(collection(db, "reviews"), {
-        name: name,
-        text: text,
-        rating: rating,
-        date: Date.now(),
-      });
-
-      document.getElementById("name").value = "";
-      document.getElementById("reviewText").value = "";
-      window.resetRating();
-      loadReviews();
-    } catch (err) {
-      console.error("Error saving review:", err);
-      alert("Något gick fel, försök igen.");
+    const routeData = routes[route]?.[dest];
+    if (!routeData) {
+      instructionDiv.textContent = "❌ Ingen väg hittades";
+      return;
     }
+
+    const maxStep = Math.max(...Object.keys(routeData).map(Number));
+    if (step < 1) step = 1;
+    if (step > maxStep) step = maxStep;
+
+    instructionDiv.textContent = routeData[step];
+
+    if (step === maxStep) {
+      const formLink = document.createElement("a");
+      formLink.href =
+        "https://forms.office.com/Pages/ResponsePage.aspx?id=w-9zaNc360mUkFNgRBSBcPDwhgNalBlNg-rkgv_NWCBUQU5UV1pUSUxPMk9TREtNN1U1SVU2VVo1WS4u";
+      formLink.textContent = "✅ Fyll i formuläret här";
+      formLink.style.display = "block";
+      formLink.style.marginTop = "20px";
+      formLink.style.fontSize = "20px";
+      instructionDiv.appendChild(formLink);
+    }
+
+    debugDiv.textContent = `Start: ${route} | Dest: ${dest} | Steg: ${step}`;
   }
+
+  showInstruction();
 
   // =======================
-  // LOAD REVIEWS
+  // QR SCANNER
   // =======================
-  async function loadReviews() {
-    const list = document.getElementById("reviewsList");
-    list.innerHTML = "";
+  const scanBtn = document.getElementById("scanBtn");
+  const video = document.getElementById("camera");
+  let scanning = false;
+  let stream;
 
-    try {
-      const q = query(collection(db, "reviews"), orderBy("date", "desc"));
-      const snapshot = await getDocs(q);
+  scanBtn.addEventListener("click", async () => {
+    instructionDiv.innerHTML =
+      "📷 Rikta kameran så <strong>hela QR-koden syns</strong><br><br>Håll lite avstånd";
 
-      let totalRating = 0;
-      let count = 0;
+    video.style.display = "block";
+    document.getElementById("html5-qrcode").style.display = "block";
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const rating = Number(data.rating) || 0;
-        if (rating > 0) totalRating += rating;
-        if (rating > 0) count++;
+    setTimeout(() => {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }, 500);
 
-        const div = document.createElement("div");
-        div.className = "review";
-        div.innerHTML = `
-          <b>${data.name}</b>
-          <div class="review-stars">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</div>
-          <p>${data.text}</p>
-        `;
-        list.appendChild(div);
-      });
+    if (scanning) return;
 
-      const avg = count ? (totalRating / count).toFixed(1) : "0";
-      document.getElementById(
-        "averageRating"
-      ).textContent = `⭐ ${avg} / 5 (${count} recensioner)`;
-    } catch (err) {
-      console.error("Error loading reviews:", err);
+    if ("BarcodeDetector" in window) {
+      scanning = true;
+      const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" }
+        });
+        video.srcObject = stream;
+        await video.play();
+
+        (async function loop() {
+          if (!scanning) return;
+          try {
+            const codes = await detector.detect(video);
+            if (codes.length) {
+              scanning = false;
+              stream.getTracks().forEach((track) => track.stop());
+              window.location.href = codes[0].rawValue;
+              return;
+            }
+          } catch {}
+          setTimeout(loop, 150);
+        })();
+      } catch (err) {
+        instructionDiv.innerHTML =
+          "❌ Kunde inte starta kameran. Kontrollera åtkomst.";
+        scanning = false;
+      }
+    } else {
+      instructionDiv.innerHTML =
+        "❌ Din enhet stöder inte BarcodeDetector. QR-skanning fungerar via HTML5-QR-code istället.";
+      // Här kan du lägga in html5-qrcode fallback om du vill
     }
-  }
-
-  // Load reviews on page load
-  loadReviews();
-
-// =======================
-// QR SCANNER
-// =======================
-const scanBtn = document.getElementById("scanBtn");
-const video = document.getElementById("camera");
-let scanning = false;
-scanBtn.addEventListener("click", async () => {
-  instructionDiv.innerHTML = "📷 Rikta kameran mot QR-koden";
-
-  // Show camera and QR box
-  video.style.display = "block";
-  document.getElementById("html5-qrcode").style.display = "block";
-
-  // Wait for a short delay so elements finish rendering
-  setTimeout(() => {
-    // Scroll to bottom smoothly
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  }, 500); // 500ms delay can be adjusted if needed
-
-  if (scanning) return;
-
-  if ("BarcodeDetector" in window) {
-    scanning = true;
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
-      });
-      video.srcObject = stream;
-      await video.play();
-
-      (async function loop() {
-        if (!scanning) return;
-        const codes = await detector.detect(video);
-        if (codes.length) {
-          scanning = false;
-          stream.getTracks().forEach(track => track.stop());
-          window.location.href = codes[0].rawValue;
-          return;
-        }
-        setTimeout(loop, 150);
-      })();
-
-    } catch (err) {
-      instructionDiv.innerHTML = "❌ Kunde inte starta kameran. Kontrollera åtkomst.";
-      scanning = false;
-    }
-  } else {
-    instructionDiv.innerHTML = "❌ Din enhet stöder inte BarcodeDetector.";
-  }
-});
+  });
 });
