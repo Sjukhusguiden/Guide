@@ -17,6 +17,118 @@
 
 <style>
 /* Enkel styling för stjärnor */
+    body{
+
+margin:0;
+font-family:Segoe UI;
+background:#f4f7fa;
+}
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 25px;
+background:#003f5c;
+color:white;
+}
+.logo{
+font-size:20px;
+font-weight:bold;
+}
+.menu-toggle{
+font-size:22px;
+cursor:pointer;
+}
+nav{
+position:absolute;
+top:70px;
+right:25px;
+width:220px;
+background:white;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.15);
+display:flex;
+flex-direction:column;
+opacity:0;
+transform:translateY(-10px);
+pointer-events:none;
+transition:0.25s;
+}
+nav.active{
+opacity:1;
+transform:translateY(0);
+pointer-events:auto;
+}
+nav a{
+padding:14px 18px;
+text-decoration:none;
+color:#005f8f;
+font-weight:500;
+}
+nav a:hover{
+background:#f2f8fc;
+}
+.hero{
+text-align:center;
+padding:80px 20px;
+background:linear-gradient(#e0f3ff,#ffffff);
+}
+.hero-icon{
+font-size:60px;
+color:#0077b6;
+}
+.scanner-section{
+text-align:center;
+padding:50px;
+}
+.primary-btn{
+background:#0077b6;
+color:white;
+padding:12px 24px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+#camera{
+width:300px;
+display:none;
+margin-top:20px;
+border-radius:10px;
+}
+.steps{
+padding:40px;
+}
+.step-card{
+background:white;
+padding:20px;
+border-radius:10px;
+margin:15px auto;
+max-width:500px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+.reviews{
+padding:40px;
+text-align:center;
+}
+.reviews input,
+.reviews textarea{
+width:80%;
+padding:10px;
+margin:10px;
+}
+.review-item{
+background:#f7f9fc;
+padding:15px;
+margin:10px auto;
+max-width:500px;
+border-radius:10px;
+}
+footer{
+background:#003f5c;
+color:white;
+text-align:center;
+padding:15px;
+}
 .star-rating {
     display: flex;
     gap: 5px;
@@ -38,12 +150,47 @@
 </style>
 </head>
 <body>
-
+<header>
+    <div class="logo">
+        <i class="fa-solid fa-hospital"></i> Sjukhusguiden
+    </div>
+    <div class="menu-toggle" onclick="toggleMenu()">
+        <i class="fa-solid fa-bars"></i>
+    </div>
+</header>
+<nav id="dropdownMenu">
+    <a href="#about"><i class="fa-solid fa-circle-info"></i> Om tjänsten</a>
+    <a href="#how"><i class="fa-solid fa-map"></i> Hur det fungerar</a>
+    <a href="#reviews"><i class="fa-solid fa-comment"></i> Recensioner</a>
+    <a href="https://www.1177.se/" target="_blank"><i class="fa-solid fa-house"></i> 1177 Startsida</a>
+    <a href="https://www.1177.se/e-tjanster/" target="_blank"><i class="fa-solid fa-comments"></i> 1177 Online-chatt</a>
+    <a href="tel:1177"><i class="fa-solid fa-phone"></i> Ring 1177</a>
+</nav>
+<section class="hero" id="about">
+    <i class="fa-solid fa-hospital hero-icon"></i>
+    <h1>Välkommen till Sjukhusguiden</h1>
+    <p>Sjukhusguiden är ett digitalt verktyg som hjälper dig att hitta rätt mottagning och rum på ett enkelt sätt.</p>
+</section>
 <section class="scanner-section">
     <h2><i class="fa-solid fa-qrcode"></i> QR-kod Scanner</h2>
     <button id="scanBtn" class="primary-btn"><i class="fa-solid fa-camera"></i> Starta scanning</button>
     <div id="instruction"></div>
     <div id="html5-qrcode"></div>
+</section>
+<section id="how" class="steps">
+    <h2><i class="fa-solid fa-route"></i> Hur man gör</h2>
+    <div class="step-card">
+        <h3>Steg 1</h3>
+        <p>Skanna QR-koden med din kamera och välj mottagning.</p>
+    </div>
+    <div class="step-card">
+        <h3>Steg 2</h3>
+        <p>Följ väginstruktionerna och skanna nästa QR-kod direkt i hemsidan tills du kommer fram.</p>
+    </div>
+    <div class="step-card">
+        <h3>Steg 3</h3>
+        <p>Om alla steg följts på rätt sätt borde du nu vara framme. Lämna gärna en recension när du är klar.</p>
+    </div>
 </section>
 
 <section id="reviews" class="reviews">
@@ -64,7 +211,7 @@
 </section>
 
 <script>
-/* ===== FIREBASE CONFIG ===== */
+/* ===== FIREBASE ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyCkHZ9nebsrLQg0ovigpxXi9DcoZWIVEhM",
   authDomain: "sjukhusguiden.firebaseapp.com",
@@ -74,42 +221,91 @@ const firebaseConfig = {
   appId: "1:122348406165:web:e698bf6d32ac22f339a29c",
   measurementId: "G-3G6D5DZD7Z"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ===== QR-SCANNER ===== */
+/* ===== QR SCANNER ===== */
 const scanBtn = document.getElementById("scanBtn");
 const instructionDiv = document.getElementById("instruction");
-let scanner;
+
+let scanner = null;
 let lastQR = null;
+let scanning = false;
 
-scanBtn.addEventListener("click", () => {
-    instructionDiv.textContent = "Tillåt åtkomst till kameran och rikta mot QR-koden";
+scanBtn.addEventListener("click", startScan);
 
-    if (scanner) scanner.clear().then(() => scanner = null);
+async function startScan() {
+
+    if (scanning) return;
+
+    scanBtn.disabled = true;
+    instructionDiv.textContent = "Startar kamera...";
+
+    await stopScanner();
 
     scanner = new Html5Qrcode("html5-qrcode");
 
-    Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
-            const cameraId = cameras[0].id;
-            scanner.start(cameraId, { fps: 10, qrbox: 250 },
-                qrCodeMessage => {
-                    lastQR = qrCodeMessage; 
-                    instructionDiv.innerHTML = `<strong>QR-kod:</strong> ${qrCodeMessage}`;
-                    scanner.stop();
-                },
-                errorMessage => { console.log("QR scan error:", errorMessage); }
-            ).catch(err => {
-                instructionDiv.textContent = "Kunde inte starta kameran: " + err;
-            });
-        } else {
-            instructionDiv.textContent = "Ingen kamera hittades";
+    try {
+        const cameras = await Html5Qrcode.getCameras();
+
+        let cameraConfig = null;
+
+        if (cameras && cameras.length > 0) {
+            // Försök hitta bakre kamera
+            const backCam = cameras.find(c =>
+                c.label &&
+                (c.label.toLowerCase().includes("back") ||
+                 c.label.toLowerCase().includes("rear"))
+            );
+
+            cameraConfig = backCam?.id || cameras[0]?.id;
         }
-    }).catch(err => {
-        instructionDiv.textContent = "Kunde inte hämta kameror: " + err;
-    });
-});
+
+        // 🔥 Fallback om ID saknas (fixar ditt error)
+        if (!cameraConfig) {
+            cameraConfig = { facingMode: "environment" };
+        }
+
+        scanning = true;
+
+        await scanner.start(
+            cameraConfig,
+            { fps: 10, qrbox: 250 },
+            onScanSuccess,
+            () => {} // ignorera scan errors
+        );
+
+        instructionDiv.textContent = "Rikta kameran mot QR-koden";
+    } catch (err) {
+        console.error(err);
+        instructionDiv.textContent =
+            "Kunde inte starta kameran. Kontrollera tillåtelse eller HTTPS.";
+    }
+
+    scanBtn.disabled = false;
+}
+
+function onScanSuccess(qrCodeMessage) {
+    lastQR = qrCodeMessage;
+    instructionDiv.innerHTML = "<strong>QR-kod:</strong> " + qrCodeMessage;
+    stopScanner();
+}
+
+async function stopScanner() {
+    if (!scanner) return;
+
+    try {
+        await scanner.stop();
+    } catch (e) {}
+
+    try {
+        scanner.clear();
+    } catch (e) {}
+
+    scanner = null;
+    scanning = false;
+}
 
 /* ===== STAR RATING ===== */
 const starRating = document.getElementById("starRating");
@@ -124,57 +320,83 @@ starRating.querySelectorAll("i").forEach(star => {
 
 function updateStars(count) {
     starRating.querySelectorAll("i").forEach(star => {
-        star.classList.toggle("selected", parseInt(star.dataset.value) <= count);
+        const value = parseInt(star.dataset.value);
+        star.classList.toggle("selected", value <= count);
     });
 }
 
-/* ===== FIRESTORE REVIEWS ===== */
+/* ===== SEND REVIEW ===== */
 const sendReviewBtn = document.getElementById("sendReviewBtn");
 const reviewListDiv = document.getElementById("reviewList");
 
-sendReviewBtn.addEventListener("click", () => {
-    const name = document.getElementById("name").value || "Anonym";
-    const text = document.getElementById("reviewText").value;
+sendReviewBtn.addEventListener("click", async () => {
+
+    const name = document.getElementById("name").value.trim() || "Anonym";
+    const text = document.getElementById("reviewText").value.trim();
 
     if (!text) return alert("Skriv en recension först!");
-    if (selectedStars === 0) return alert("Välj ett betyg med stjärnor!");
+    if (selectedStars === 0) return alert("Välj ett betyg!");
 
-    db.collection("reviews").add({
-        name: name,
-        text: text,
-        stars: selectedStars,
-        qrCode: lastQR || null,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
+    try {
+        await db.collection("reviews").add({
+            name,
+            text,
+            stars: selectedStars,
+            qrCode: lastQR || null,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
         document.getElementById("name").value = "";
         document.getElementById("reviewText").value = "";
         selectedStars = 0;
         updateStars(0);
+
         alert("Recension skickad!");
-    }).catch(err => {
-        console.error("Fel vid sparande:", err);
-    });
+    } catch (err) {
+        console.error(err);
+        alert("Kunde inte skicka recension");
+    }
 });
 
-// Visa reviews i realtid
-db.collection("reviews").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+/* ===== REALTIME REVIEWS ===== */
+db.collection("reviews")
+.orderBy("timestamp", "desc")
+.onSnapshot(snapshot => {
+
     reviewListDiv.innerHTML = "";
+
     snapshot.forEach(doc => {
         const data = doc.data();
-        const starsHtml = "★".repeat(data.stars) + "☆".repeat(5 - data.stars);
+
         const div = document.createElement("div");
         div.className = "review-card";
-        div.innerHTML = `<strong>${data.name}</strong> (${data.qrCode || "Ingen QR"}): <p>${starsHtml}</p><p>${data.text}</p>`;
+
+        const nameEl = document.createElement("strong");
+        nameEl.textContent = data.name;
+
+        const qrEl = document.createElement("div");
+        qrEl.textContent = "QR: " + (data.qrCode || "Ingen");
+
+        const starsEl = document.createElement("div");
+        starsEl.textContent =
+            "★".repeat(data.stars) + "☆".repeat(5 - data.stars);
+
+        const textEl = document.createElement("p");
+        textEl.textContent = data.text;
+
+        div.appendChild(nameEl);
+        div.appendChild(qrEl);
+        div.appendChild(starsEl);
+        div.appendChild(textEl);
+
         reviewListDiv.appendChild(div);
     });
 });
 
-/* ===== DROPDOWN MENU ===== */
+/* ===== MENU ===== */
 function toggleMenu() {
-    const menu = document.getElementById("dropdownMenu");
-    menu.classList.toggle("show");
+    document.getElementById("dropdownMenu").classList.toggle("active");
 }
 </script>
-
 </body>
 </html>
