@@ -252,17 +252,20 @@ async function startScan() {
         let cameraConfig = null;
 
         if (cameras && cameras.length > 0) {
+
             // Försök hitta bakre kamera
             const backCam = cameras.find(c =>
                 c.label &&
-                (c.label.toLowerCase().includes("back") ||
-                 c.label.toLowerCase().includes("rear"))
+                (
+                    c.label.toLowerCase().includes("back") ||
+                    c.label.toLowerCase().includes("rear")
+                )
             );
 
             cameraConfig = backCam?.id || cameras[0]?.id;
         }
 
-        // 🔥 Fallback om ID saknas (fixar ditt error)
+        // Fallback om kamera-ID saknas
         if (!cameraConfig) {
             cameraConfig = { facingMode: "environment" };
         }
@@ -271,28 +274,61 @@ async function startScan() {
 
         await scanner.start(
             cameraConfig,
-            { fps: 10, qrbox: 250 },
+            {
+                fps: 10,
+                qrbox: 250
+            },
             onScanSuccess,
-            () => {} // ignorera scan errors
+            (error) => {
+                // Ignorera scanning spam errors
+                // console.log(error);
+            }
         );
 
-        instructionDiv.textContent = "Rikta kameran mot QR-koden";
-    } catch (err) {
-        console.error(err);
         instructionDiv.textContent =
-            "Kunde inte starta kameran. Kontrollera tillåtelse eller HTTPS.";
+            "Rikta kameran mot QR-koden";
+
+    } catch (err) {
+
+        console.error(err);
+
+        instructionDiv.textContent =
+            "Kunde inte starta kameran.";
+
     }
 
     scanBtn.disabled = false;
 }
 
 function onScanSuccess(qrCodeMessage) {
+
     lastQR = qrCodeMessage;
-    instructionDiv.innerHTML = "<strong>QR-kod:</strong> " + qrCodeMessage;
+
+    // Stoppa scanner direkt
     stopScanner();
+
+    // Om QR-koden innehåller en länk
+    if (
+        qrCodeMessage.startsWith("http://") ||
+        qrCodeMessage.startsWith("https://")
+    ) {
+
+        instructionDiv.innerHTML =
+            "<strong>Öppnar:</strong> " + qrCodeMessage;
+
+        // Öppna länken automatiskt
+        window.location.href = qrCodeMessage;
+
+        return;
+    }
+
+    // Visa vanlig QR-text
+    instructionDiv.innerHTML =
+        "<strong>QR-kod:</strong> " + qrCodeMessage;
 }
 
 async function stopScanner() {
+
     if (!scanner) return;
 
     try {
